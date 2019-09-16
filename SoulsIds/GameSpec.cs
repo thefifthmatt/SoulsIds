@@ -37,10 +37,16 @@ namespace SoulsIds
         private static readonly Dictionary<FromGame, GameSpec> Games = new Dictionary<FromGame, GameSpec>
         {
             [FromGame.UNKNOWN] = new GameSpec(),
-            // TODO: Fill these in
             [FromGame.DS1] = new GameSpec
             {
                 Dcx = DCX.Type.DarkSouls1,
+                GameDir = @"C:\Program Files (x86)\Steam\SteamApps\common\Dark Souls Prepare to Die Edition\DATA",
+                EsdDir = @"script\talk",  // Also "chr"
+                MsgDir = @"msg\ENGLISH",  // English as default
+                MsbDir = @"map\MapStudio",
+                ParamFile = @"param\GameParam\GameParam.parambnd",
+                NameDir = @"dist\DS1R\Names",
+                LayoutDir = @"dist\DS1\Layouts",
             },
             [FromGame.DS1R] = new GameSpec
             {
@@ -48,16 +54,32 @@ namespace SoulsIds
                 GameDir = @"C:\Program Files (x86)\Steam\steamapps\common\DARK SOULS REMASTERED",
                 EsdDir = @"script\talk",  // Also "chr"
                 MsgDir = @"msg\ENGLISH",  // English as default
+                MsbDir = @"map\MapStudio",
                 ParamFile = @"param\GameParam\GameParam.parambnd.dcx",
+                NameDir = @"dist\DS1R\Names",
                 LayoutDir = @"dist\DS1R\Layouts",
             },
             [FromGame.DS2] = new GameSpec
             {
                 Dcx = DCX.Type.DarkSouls1,
+                GameDir = @"C:\Program Files (x86)\Steam\steamapps\common\Dark Souls II\Game",
+                EsdDir = @"ezstate",
+                MsgDir = @"menu\text\english",  // Also in talk subdir
+                MsbDir = @"map",                // One msb per subdir
+                ParamFile = "gameparam_dlc2.parambnd.dcx",
+                NameDir = @"dist\DS2S\Names",
+                LayoutDir = @"dist\DS2S\Layouts",  // The same?
             },
             [FromGame.DS2S] = new GameSpec
             {
                 Dcx = DCX.Type.DarkSouls1,
+                GameDir = @"C:\Program Files (x86)\Steam\steamapps\common\Dark Souls II Scholar of the First Sin\Game",
+                EsdDir = @"ezstate",
+                MsgDir = @"menu\text\english",  // Also in talk subdir
+                MsbDir = @"map",                // One msb per subdir
+                ParamFile = "gameparam_dlc2.parambnd.dcx",
+                NameDir = @"dist\DS2S\Names",
+                LayoutDir = @"dist\DS2S\Layouts",
             },
             [FromGame.BB] = new GameSpec
             {

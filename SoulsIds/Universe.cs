@@ -42,14 +42,17 @@ namespace SoulsIds
             CHR_MODEL,
             TREASURE,
             MAP,
+            BONFIRE,
+            HUMAN,
+            ACTION,
             // In future
             CUTSCENE,
             ACHIEVEMENT,
             ANIMATION,
             SP_EFFECT,
             SFX,
-            ACTION,
         }
+        private static HashSet<Namespace> Quotes = new HashSet<Namespace> { Namespace.ACTION, Namespace.DIALOGUE, Namespace.TALK };
         public class Obj : IComparable<Obj>
         {
             public string ID { get; set; }
@@ -103,6 +106,9 @@ namespace SoulsIds
             public static Obj ObjModel(string id) => new Obj(id, Namespace.OBJ_MODEL);
             public static Obj ChrModel(string id) => new Obj(id, Namespace.CHR_MODEL);
             public static Obj Treasure(string map, int index) => new Obj($"{map}_{index}", Namespace.TREASURE);
+            public static Obj Dialogue(int id) => new Obj(id, Namespace.DIALOGUE);
+            public static Obj Bonfire(int id) => new Obj(id, Namespace.BONFIRE);
+            public static Obj Human(int id) => new Obj(id, Namespace.HUMAN);
 
             // For names
             public static Obj Of(Namespace type, object id) => new Obj(id, type);
@@ -158,7 +164,10 @@ namespace SoulsIds
         }
         public string Name(Obj obj)
         {
-            if (Names.ContainsKey(obj)) return $"{obj}:{Names[obj]}";
+            if (Names.TryGetValue(obj, out string name))
+            {
+                return $"{obj}:{(Quotes.Contains(obj.Type) ? $"\"{name}\"" : name)}";
+            }
             return $"{obj}";
         }
         public List<Obj> Next(Obj obj, Verb v, Namespace type=Namespace.GLOBAL)

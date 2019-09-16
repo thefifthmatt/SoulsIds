@@ -21,10 +21,10 @@ namespace SoulsIds
         {
             this.Spec = spec;
         }
-        public Dictionary<string, PARAM> LoadParams()
+        public Dictionary<string, PARAM> LoadParams(Dictionary<string, PARAM.Layout> layouts = null)
         {
             if (Spec.ParamFile == null) throw new Exception("Param path unknown");
-            Dictionary<string, PARAM.Layout> layouts = LoadLayouts();
+            layouts = layouts ?? LoadLayouts();
             return LoadBnd($@"{Spec.GameDir}\{Spec.ParamFile}", (data, path) =>
             {
                 PARAM param;
@@ -37,7 +37,11 @@ namespace SoulsIds
                     // For DS3 this also includes draw params, so just silently fail
                     return null;
                 }
-                if (layouts.ContainsKey(param.ID))
+                if (layouts == null)
+                {
+                    return param;
+                }
+                else if (layouts.ContainsKey(param.ID))
                 {
                     PARAM.Layout layout = layouts[param.ID];
                     if (layout.Size == param.DetectedSize)
@@ -68,7 +72,7 @@ namespace SoulsIds
             }
             return ret;
         }
-        private Dictionary<string, PARAM.Layout> LoadLayouts()
+        public Dictionary<string, PARAM.Layout> LoadLayouts()
         {
             if (Spec.LayoutDir == null) throw new Exception("Layout dir not provided");
             Dictionary<string, PARAM.Layout> layouts = new Dictionary<string, PARAM.Layout>();
@@ -98,7 +102,7 @@ namespace SoulsIds
             }
             return ret;
         }
-        public Dictionary<string, T> LoadBnd<T>(string path, Func<byte[], string, T> parser)
+        public Dictionary<string, T> LoadBnd<T>(string path, Func<byte[], string, T> parser, string fileExt=null)
         {
             string name = BaseName(path);
             Dictionary<string, T> bnds = new Dictionary<string, T>();
@@ -113,6 +117,7 @@ namespace SoulsIds
             }
             foreach (BinderFile file in bnd.Files)
             {
+                if (fileExt != null && !file.Name.EndsWith(fileExt)) continue;
                 string bndName = BaseName(file.Name);
                 try
                 {
@@ -126,14 +131,14 @@ namespace SoulsIds
             }
             return bnds;
         }
-        public Dictionary<string, Dictionary<string, T>> LoadBnds<T>(string relDir, Func<byte[], string, T> parser, string ext = "*bnd.dcx")
+        public Dictionary<string, Dictionary<string, T>> LoadBnds<T>(string relDir, Func<byte[], string, T> parser, string ext = "*bnd.dcx", string fileExt = null)
         {
             if (Spec.GameDir == null) throw new Exception("Base game dir not provided");
             Dictionary<string, Dictionary<string, T>> ret = new Dictionary<string, Dictionary<string, T>>();
             foreach (string path in Directory.GetFiles($@"{Spec.GameDir}\{relDir}", ext))
             {
                 string name = BaseName(path);
-                Dictionary<string, T> bnds = LoadBnd(path, parser);
+                Dictionary<string, T> bnds = LoadBnd(path, parser, fileExt);
                 if (bnds.Count > 0)
                 {
                     ret[name] = bnds;
@@ -164,13 +169,14 @@ namespace SoulsIds
                 throw new Exception($"Failed to load {path}: {ex}");
             }
         }
-        public void OverrideBnd<T>(string path, string toDir, Dictionary<string, T> diffData, Func<T, byte[]> writer)
+        public void OverrideBnd<T>(string path, string toDir, Dictionary<string, T> diffData, Func<T, byte[]> writer, string fileExt=null)
         {
             if (Spec.Dcx == DCX.Type.Unknown) throw new Exception("DCX encoding not provided");
             string fname = Path.GetFileName(path);
             IBinder bnd = ReadBnd(path);
             foreach (BinderFile file in bnd.Files)
             {
+                if (fileExt != null && !file.Name.EndsWith(fileExt)) continue;
                 string bndName = BaseName(file.Name);
                 if (!diffData.ContainsKey(bndName) || diffData[bndName] == null) continue;
                 try
@@ -196,14 +202,14 @@ namespace SoulsIds
             }
             if (bnd is BND3 bnd3) bnd3.Write(outPath, Spec.Dcx);
         }
-        public void OverrideBnds<T>(string fromDir, string toDir, Dictionary<string, Dictionary<string, T>> diffBnds, Func<T, byte[]> writer, string ext = "*bnd.dcx")
+        public void OverrideBnds<T>(string fromDir, string toDir, Dictionary<string, Dictionary<string, T>> diffBnds, Func<T, byte[]> writer, string ext = "*bnd.dcx", string fileExt = null)
         {
             if (Spec.GameDir == null) throw new Exception("Base game dir not provided");
             foreach (string path in Directory.GetFiles($@"{Spec.GameDir}\{fromDir}", ext))
             {
                 string name = BaseName(path);
                 if (!diffBnds.ContainsKey(name)) continue;
-                OverrideBnd(path, toDir, diffBnds[name], writer);
+                OverrideBnd(path, toDir, diffBnds[name], writer, fileExt);
             }
         }
         public static string BaseName(string path)
