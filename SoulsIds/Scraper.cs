@@ -74,7 +74,7 @@ namespace SoulsIds
         {
             if (spec.MsgDir == null) return false;
             foreach (KeyValuePair<string, FMG> entry in editor.LoadBnds(spec.MsgDir, (data, name) => FMG.Read(data)).SelectMany(e => e.Value)
-                .Concat(editor.Load(spec.MsgDir, name => FMG.Read(name), "*.fmg")))
+                .Concat(editor.Load(spec.MsgDir, name => FMG.Read(name), "*.fmg")).OrderBy(e => e.Key))
             {
                 if (MsgTypes.ContainsKey(entry.Key))
                 {

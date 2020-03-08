@@ -39,7 +39,7 @@ namespace SoulsIds
             [FromGame.UNKNOWN] = new GameSpec(),
             [FromGame.DS1] = new GameSpec
             {
-                Dcx = DCX.Type.DarkSouls1,
+                Dcx = DCX.Type.None,
                 GameDir = @"C:\Program Files (x86)\Steam\SteamApps\common\Dark Souls Prepare to Die Edition\DATA",
                 EsdDir = @"script\talk",  // Also "chr"
                 MsgDir = @"msg\ENGLISH",  // English as default
@@ -50,7 +50,7 @@ namespace SoulsIds
             },
             [FromGame.DS1R] = new GameSpec
             {
-                Dcx = DCX.Type.DarkSouls1,
+                Dcx = (DCX.Type)DCX.DefaultType.DarkSouls1,
                 GameDir = @"C:\Program Files (x86)\Steam\steamapps\common\DARK SOULS REMASTERED",
                 EsdDir = @"script\talk",  // Also "chr"
                 MsgDir = @"msg\ENGLISH",  // English as default
@@ -61,7 +61,7 @@ namespace SoulsIds
             },
             [FromGame.DS2] = new GameSpec
             {
-                Dcx = DCX.Type.DarkSouls1,
+                Dcx = (DCX.Type)DCX.DefaultType.DarkSouls1,
                 GameDir = @"C:\Program Files (x86)\Steam\steamapps\common\Dark Souls II\Game",
                 EsdDir = @"ezstate",
                 MsgDir = @"menu\text\english",  // Also in talk subdir
@@ -72,7 +72,7 @@ namespace SoulsIds
             },
             [FromGame.DS2S] = new GameSpec
             {
-                Dcx = DCX.Type.DarkSouls1,
+                Dcx = (DCX.Type)DCX.DefaultType.DarkSouls1,
                 GameDir = @"C:\Program Files (x86)\Steam\steamapps\common\Dark Souls II Scholar of the First Sin\Game",
                 EsdDir = @"ezstate",
                 MsgDir = @"menu\text\english",  // Also in talk subdir
@@ -83,11 +83,11 @@ namespace SoulsIds
             },
             [FromGame.BB] = new GameSpec
             {
-                Dcx = DCX.Type.DarkSouls3,
+                Dcx = (DCX.Type)DCX.DefaultType.DarkSouls3,
             },
             [FromGame.DS3] = new GameSpec
             {
-                Dcx = DCX.Type.DarkSouls3,
+                Dcx = (DCX.Type)DCX.DefaultType.DarkSouls3,
                 GameDir = @"C:\Program Files (x86)\Steam\steamapps\common\DARK SOULS III\Game",
                 EsdDir = @"script\talk",
                 MsgDir = @"msg\engus",
@@ -98,7 +98,7 @@ namespace SoulsIds
             },
             [FromGame.SDT] = new GameSpec
             {
-                Dcx = DCX.Type.SekiroKRAK,
+                Dcx = (DCX.Type)DCX.DefaultType.Sekiro,
                 GameDir = @"C:\Program Files (x86)\Steam\steamapps\common\Sekiro",
                 EsdDir = @"script\talk",
                 MsgDir = @"msg\engus",

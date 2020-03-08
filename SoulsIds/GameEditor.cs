@@ -32,22 +32,28 @@ namespace SoulsIds
                 {
                     param = PARAM.Read(data);
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
+                    Console.WriteLine(e);
                     // For DS3 this also includes draw params, so just silently fail
+                    // TODO: Find a better way to load all params reliably
                     return null;
                 }
                 if (layouts == null)
                 {
                     return param;
                 }
-                else if (layouts.ContainsKey(param.ID))
+                else if (layouts.ContainsKey(param.ParamType))
                 {
-                    PARAM.Layout layout = layouts[param.ID];
+                    PARAM.Layout layout = layouts[param.ParamType];
                     if (layout.Size == param.DetectedSize)
                     {
-                        param.SetLayout(layout);
+                        param.ApplyParamdef(layout.ToParamdef(param.ParamType, out var _));
                         return param;
+                    }
+                    else
+                    {
+                        // Console.WriteLine($"Mismatched size for {path} - {layout.Size} vs {param.DetectedSize} actual");
                     }
                 }
                 return null;
@@ -222,6 +228,13 @@ namespace SoulsIds
         {
             if (basePath == null) return Path.GetFullPath(maybeRelPath);
             return Path.GetFullPath(Path.Combine(basePath, maybeRelPath));
+        }
+        public static void CopyRow(PARAM.Row from, PARAM.Row to)
+        {
+            for (int i = 0; i < from.Cells.Count; i++)
+            {
+                to.Cells[i].Value = from.Cells[i].Value;
+            }
         }
     }
 }
