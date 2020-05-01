@@ -200,7 +200,11 @@ namespace SoulsIds
         {
             public EMEVD.Event Event { get; set; }
             public List<EMEVD.Instruction> Original { get; set; }
+            public Dictionary<EMEVD.Instruction, List<EMEVD.Parameter>> NewInstructions = new Dictionary<EMEVD.Instruction, List<EMEVD.Parameter>>();
 
+            // Creates a record of parameters with original instructions.
+            // The parameters will be preserved if the parameterized instructions are still present by reference.
+            // If using this system, parameters should not be modified manually.
             public static OldParams Preprocess(EMEVD.Event e)
             {
                 if (e.Parameters.Count == 0) return new OldParams();
@@ -211,19 +215,44 @@ namespace SoulsIds
                 };
             }
 
+            // Adds a never-before-seen paramterized instruction, and parameters to add later for it.
+            public void AddParameters(EMEVD.Instruction instr, List<EMEVD.Parameter> ps)
+            {
+                if (ps != null && ps.Count > 0)
+                {
+                    NewInstructions[instr] = ps;
+                }
+            }
+
+            // Updates old indices and adds new indices
             public void Postprocess()
             {
-                if (Event == null || Event.Parameters.Count == 0) return;
-                Dictionary<EMEVD.Instruction, int> indices = Event.Instructions.Select((a, i) => (a, i)).ToDictionary(p => p.Item1, p => p.Item2);
+                if (Event == null || (Event.Parameters.Count == 0 && NewInstructions.Count == 0)) return;
+                Dictionary<EMEVD.Instruction, int> currentIndices = Event.Instructions.Select((a, i) => (a, i)).ToDictionary(p => p.Item1, p => p.Item2);
+                // Update old indices
                 Event.Parameters = Event.Parameters.Select(p =>
                 {
-                    if (indices.TryGetValue(Original[(int)p.InstructionIndex], out int currentIndex))
+                    if (currentIndices.TryGetValue(Original[(int)p.InstructionIndex], out int currentIndex))
                     {
                         p.InstructionIndex = currentIndex;
                         return p;
                     }
                     return null;
                 }).Where(p => p != null).ToList();
+                // Add new indices not yet added
+                foreach (KeyValuePair<EMEVD.Instruction, List<EMEVD.Parameter>> entry in NewInstructions)
+                {
+                    if (!currentIndices.TryGetValue(entry.Key, out int currentIndex)) continue;
+                    foreach (EMEVD.Parameter p in entry.Value)
+                    {
+                        // This will be messy if the parameter is added independently, since it will probably error out above.
+                        // As part of using this utility, parameters should not be modified manually.
+                        // Either way, definitely update it here.
+                        p.InstructionIndex = currentIndex;
+                        if (Event.Parameters.Contains(p)) continue;
+                        Event.Parameters.Add(p);
+                    }
+                }
             }
         }
 
@@ -362,6 +391,7 @@ namespace SoulsIds
         public class InstrEdit
         {
             public EMEVD.Instruction Add { get; set; }
+            public List<EMEVD.Parameter> AddParams { get; set; }
             public bool AddAfter { get; set; }
             public bool Remove { get; set; }
             public Dictionary<int, string> PosEdit { get; set; }
@@ -385,7 +415,7 @@ namespace SoulsIds
             }
         }
 
-        public void ApplyAdds(EventEdits edits, EMEVD.Event e)
+        public void ApplyAdds(EventEdits edits, EMEVD.Event e, OldParams oldParams = null)
         {
             // Add all commands in reverse order, to preserve indices
             foreach (KeyValuePair<int, List<InstrEdit>> lineEdit in edits.PendingAdds.OrderByDescending(item => item.Key))
@@ -396,6 +426,11 @@ namespace SoulsIds
                     foreach (InstrEdit addEdit in Enumerable.Reverse(lineEdit.Value))
                     {
                         e.Instructions.Add(addEdit.Add);
+                        if (addEdit.AddParams != null)
+                        {
+                            if (oldParams == null) throw new ArgumentException($"Can't add instruction with parameters if old params cannot be added in {edits}");
+                            oldParams.AddParameters(addEdit.Add, addEdit.AddParams);
+                        }
                         edits.PendingEdits.Remove(addEdit);
                     }
                     continue;
@@ -405,6 +440,11 @@ namespace SoulsIds
                     if (addEdit.Add != null && addEdit.AddAfter)
                     {
                         e.Instructions.Insert(lineEdit.Key + 1, addEdit.Add);
+                        if (addEdit.AddParams != null)
+                        {
+                            if (oldParams == null) throw new ArgumentException($"Can't add instruction with parameters if old params cannot be added in {edits}");
+                            oldParams.AddParameters(addEdit.Add, addEdit.AddParams);
+                        }
                         edits.PendingEdits.Remove(addEdit);
                     }
                 }
@@ -413,6 +453,11 @@ namespace SoulsIds
                     if (addEdit.Add != null && !addEdit.AddAfter)
                     {
                         e.Instructions.Insert(lineEdit.Key, addEdit.Add);
+                        if (addEdit.AddParams != null)
+                        {
+                            if (oldParams == null) throw new ArgumentException($"Can't add instruction with parameters if old params cannot be added in {edits}");
+                            oldParams.AddParameters(addEdit.Add, addEdit.AddParams);
+                        }
                         edits.PendingEdits.Remove(addEdit);
                     }
                 }
@@ -421,9 +466,21 @@ namespace SoulsIds
 
         public void AddMacro(EventEdits edits, string toFind, bool addAfter, string add)
         {
+            EMEVD.Instruction instr;
+            List<EMEVD.Parameter> ps = null;
+            if (add.Contains("X"))
+            {
+                (instr, ps) = ParseAddArg(add, 0);
+                if (ps.Count == 0) ps = null;
+            }
+            else
+            {
+                instr = ParseAdd(add);
+            }
             InstrEdit edit = new InstrEdit
             {
-                Add = ParseAdd(add),
+                Add = instr,
+                AddParams = ps,
                 AddAfter = addAfter
             };
             if (toFind == null)
@@ -543,6 +600,7 @@ namespace SoulsIds
             }
             throw new Exception($"Couldn't find ending condition '{req}', group {isGroup}, in event {e.ID}");
         }
+
         public List<EMEVD.Instruction> RewriteCondGroup(List<EMEVD.Instruction> after, Dictionary<int, int> reloc, int target)
         {
             sbyte targetCond = (sbyte)target;
