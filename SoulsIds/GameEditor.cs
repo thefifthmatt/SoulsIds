@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -20,6 +20,41 @@ namespace SoulsIds
         public GameEditor(GameSpec spec)
         {
             this.Spec = spec;
+        }
+
+        public Dictionary<string, PARAM> LoadParams(Dictionary<string, PARAMDEF> defs)
+        {
+            if (Spec.ParamFile == null) throw new Exception("Param path unknown");
+            return LoadParams($@"{Spec.GameDir}\{Spec.ParamFile}", defs);
+        }
+
+        public Dictionary<string, PARAM> LoadParams(string path, Dictionary<string, PARAMDEF> defs)
+        {
+            return LoadBnd(path, (data, paramPath) =>
+            {
+                PARAM param;
+                try
+                {
+                    param = PARAM.Read(data);
+                }
+                catch (Exception e)
+                {
+                    throw new Exception($"Failed to load param {paramPath}: " + e);
+                }
+                if (defs.TryGetValue(param.ParamType, out PARAMDEF def))
+                {
+                    if (def.GetRowSize() == param.DetectedSize)
+                    {
+                        param.ApplyParamdef(def);
+                        return param;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Mismatched size for {paramPath} - {def.GetRowSize()} vs {param.DetectedSize} actual");
+                    }
+                }
+                return null;
+            });
         }
 
         // Load params from a combination of game dir and param file in spec.
@@ -103,6 +138,19 @@ namespace SoulsIds
             return layouts;
         }
 
+        public Dictionary<string, PARAMDEF> LoadDefs()
+        {
+            if (Spec.DefDir == null) throw new Exception("Def dir not provided");
+            Dictionary<string, PARAMDEF> defs = new Dictionary<string, PARAMDEF>();
+            foreach (string path in Directory.GetFiles(Spec.DefDir, "*.xml"))
+            {
+                string paramID = Path.GetFileNameWithoutExtension(path);
+                PARAMDEF def = PARAMDEF.XmlDeserialize(path);
+                defs[paramID] = def;
+            }
+            return defs;
+        }
+
         // Loads multiple files from relDir, relative to the game directory
         public Dictionary<string, T> Load<T>(string relDir, Func<string, T> reader, string ext = "*.dcx")
         {
@@ -177,17 +225,22 @@ namespace SoulsIds
         {
             try
             {
-                if (BND3.Is(path))
-                {
-                    return BND3.Read(path);
-                }
-                else if (BND4.Is(path))
-                {
-                    return BND4.Read(path);
-                }
-                else if (Spec.Game == FromGame.DS3 && path.EndsWith("Data0.bdt"))
+                if (Spec.Game == FromGame.DS3 && path.EndsWith("Data0.bdt"))
                 {
                     return SFUtil.DecryptDS3Regulation(path);
+                }
+                byte[] data = File.ReadAllBytes(path);
+                if (DCX.Is(data))
+                {
+                    data = DCX.Decompress(data);
+                }
+                if (BND4.Is(data))
+                {
+                    return BND4.Read(data);
+                }
+                else if (BND3.Is(data))
+                {
+                    return BND3.Read(data);
                 }
                 else throw new Exception($"Unrecognized bnd format for game {Spec.Game}: {path}");
             }

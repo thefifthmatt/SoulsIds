@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,10 +23,11 @@ namespace SoulsIds
         public string NameDir { get; set; }
         // Param layout files, relative to current dir
         public string LayoutDir { get; set; }
+        public string DefDir { get; set; }
 
         public GameSpec Clone() => (GameSpec)MemberwiseClone();
 
-        public enum FromGame { UNKNOWN, DS1, DS1R, DS2, DS2S, BB, DS3, SDT }
+        public enum FromGame { UNKNOWN, DS1, DS1R, DS2, DS2S, BB, DS3, SDT, ER }
         public static GameSpec ForGame(FromGame game)
         {
             GameSpec spec = Games.TryGetValue(game, out GameSpec baseSpec) ? baseSpec.Clone() : new GameSpec();
@@ -103,9 +104,20 @@ namespace SoulsIds
                 EsdDir = @"script\talk",
                 MsgDir = @"msg\engus",
                 MsbDir = @"map\mapstudio",
-                ParamFile = @"param\GameParam\GameParam.parambnd.dcx",
+                ParamFile = @"param\gameparam\gameparam.parambnd.dcx",
                 NameDir = @"dist\SDT\Names",
                 LayoutDir = @"dist\SDT\Layouts",
+            },
+            [FromGame.ER] = new GameSpec
+            {
+                Dcx = (DCX.Type)DCX.DefaultType.Sekiro,
+                GameDir = @"C:\Program Files (x86)\Steam\steamapps\common\Elden Ring",
+                EsdDir = @"script\talk",
+                MsgDir = @"msg\engus",
+                MsbDir = @"map\mapstudio",
+                ParamFile = @"param\gameparam\gameparam.parambnd.dcx",
+                // NameDir = @"dist\ER\Names",
+                DefDir = @"dist\ER\Defs",
             },
         };
     }

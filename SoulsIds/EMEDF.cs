@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IO;
 
@@ -93,6 +93,12 @@ namespace SoulsIds
 
             [JsonProperty(PropertyName = "unk4")]
             private long UNK4 { get; set; }
+
+            // Calculated values
+
+            public EnumDoc EnumDoc { get; set; }
+
+            public object GetDisplayValue(object val) => EnumDoc == null ? val : EnumDoc.GetDisplayValue(val);
         }
 
         public class EnumDoc
@@ -102,6 +108,12 @@ namespace SoulsIds
 
             [JsonProperty(PropertyName = "values")]
             public Dictionary<string, string> Values { get; set; }
+
+            // Calculated values
+
+            public Dictionary<string, string> DisplayValues { get; set; }
+
+            public object GetDisplayValue(object val) => DisplayValues.TryGetValue(val.ToString(), out string reval) ? reval : val;
         }
     }
 }

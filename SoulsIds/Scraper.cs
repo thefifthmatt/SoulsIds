@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -36,6 +36,16 @@ namespace SoulsIds
             { "npcmenu", Namespace.NPC },
             { "itemname", Namespace.GOODS },
             { "bonfirename", Namespace.BONFIRE },
+            // ER
+            { "NpcName", Namespace.NPC },
+            { "WeaponName", Namespace.WEAPON },
+            { "ProtectorName", Namespace.PROTECTOR },
+            { "AccessoryName", Namespace.ACCESSORY },
+            { "GoodsName", Namespace.GOODS },
+            { "GemName", Namespace.GEM },
+            { "ArtsName", Namespace.ARTS },
+            { "EventTextForTalk", Namespace.ACTION },
+            { "TalkMsg", Namespace.DIALOGUE },
         };
         public static readonly Dictionary<Namespace, string> ItemParams = new Dictionary<Namespace, string>
         {
@@ -59,7 +69,15 @@ namespace SoulsIds
         {
             if (Params == null)
             {
-                Params = new GameEditor(spec).LoadParams();
+                if (spec.DefDir == null)
+                {
+                    Params = new GameEditor(spec).LoadParams(null, true);
+                }
+                else
+                {
+                    GameEditor editor = new GameEditor(spec);
+                    Params = editor.LoadParams(editor.LoadDefs());
+                }
             }
         }
 
@@ -69,6 +87,7 @@ namespace SoulsIds
             // Just add the male lines for the moment... they have the same talk id
             [FromGame.DS3] = "PcGenderFemale1",
             [FromGame.SDT] = "TalkParamId1",
+            [FromGame.ER] = "TalkParamId1",
         };
         public bool ScrapeMsgs(Universe u)
         {
@@ -115,6 +134,7 @@ namespace SoulsIds
         }
         public bool ScrapeItems(Universe u)
         {
+            // We may be able to support partial ids just based on row ids, but shelve this for now
             if (spec.ParamFile == null) return false;
             LoadParams();
             if (spec.Game == FromGame.DS2S)
@@ -128,8 +148,7 @@ namespace SoulsIds
                     if (u.Names.ContainsKey(item) && !u.Names.ContainsKey(lot)) u.Names[lot] = u.Names[item];
                 }
             }
-            if (!Params.ContainsKey("ItemLotParam")) return false;
-            if (spec.Game == FromGame.DS1R)
+            if (spec.Game == FromGame.DS1R && Params.ContainsKey("ItemLotParam"))
             {
                 foreach (PARAM.Row row in Params["ItemLotParam"].Rows)
                 {
@@ -191,7 +210,80 @@ namespace SoulsIds
                 }
                 // NPC param file is invalid for DS1R? lot should be itemLotId_1 though
             }
-            else if (spec.Game == FromGame.DS3)
+            else if (spec.Game == FromGame.ER && Params.ContainsKey("ItemLotParam_map"))
+            {
+                foreach (string variant in new[] { "map", "enemy" })
+                {
+                    foreach (PARAM.Row row in Params[$"ItemLotParam_{variant}"].Rows)
+                    {
+                        Obj lot = Obj.Lot((int)row.ID);
+                        int eventFlag = (int)row["getItemFlagId"].Value;
+                        if (eventFlag != -1)
+                        {
+                            u.Add(Verb.WRITES, lot, Obj.EventFlag(eventFlag));
+                        }
+                        Dictionary<uint, Namespace> typeMapping = new Dictionary<uint, Namespace>
+                        {
+                            // The enum order is WEAPON PROTECTOR ACCESSORY GOODS (GEM ART)
+                            [1] = Namespace.GOODS,
+                            [2] = Namespace.WEAPON,
+                            [3] = Namespace.PROTECTOR,
+                            [4] = Namespace.ACCESSORY,
+                            [5] = Namespace.GEM,
+                        };
+                        for (int i = 1; i <= 8; i++)
+                        {
+                            int id = (int)row[$"ItemLotId{i}"].Value;
+                            uint type = (uint)row[$"LotItemCategory0{i}"].Value;
+                            if (id != 0 && type != 0)
+                            {
+                                Namespace itemType = typeMapping[type];
+                                Obj item = Obj.Of(itemType, id);
+                                u.Add(Verb.PRODUCES, lot, item);
+                                if (u.Names.ContainsKey(item) && !u.Names.ContainsKey(lot))
+                                {
+                                    u.Names[lot] = u.Names[item];
+                                }
+                            }
+                        }
+                    }
+                }
+                foreach (PARAM.Row row in Params["ShopLineupParam"].Rows)
+                {
+                    // if (row.ID >= 9000000) continue;
+
+                    Obj shop = Obj.Shop((int)row.ID);
+
+                    int eventFlag = (int)row["EventFlag"].Value;
+                    if (eventFlag != -1)
+                    {
+                        u.Add(Verb.WRITES, shop, Obj.EventFlag(eventFlag));
+                    }
+
+                    int qwc = (int)row["qwcID"].Value;
+                    if (qwc != -1)
+                    {
+                        u.Add(Verb.READS, shop, Obj.EventFlag(qwc));
+                    }
+
+                    int type = (byte)row["equipType"].Value;
+                    int id = (int)row["EquipId"].Value;
+                    List<Obj> objs = new List<uint> { 0, 1, 2, 3, 4, 5 }.Select(t => Obj.Item(t, id)).Where(t => u.Names.ContainsKey(t) && !string.IsNullOrEmpty(u.Names[t])).ToList();
+                    Console.WriteLine($"shop {row.ID}: for type {type}, these exist: {string.Join(", ", objs.Select(o => $"{o}={u.Names[o]}"))}");
+
+                    Obj item = Obj.Item((uint)type, id);
+                    u.Add(Verb.PRODUCES, shop, item);
+                    if (u.Names.ContainsKey(item)) u.Names[shop] = u.Names[item];
+
+                    int material = (int)row["mtrlId"].Value;
+                    if (material != -1)
+                    {
+                        u.Add(Verb.CONSUMES, shop, Obj.Material(material));
+                    }
+                }
+                // Can also add materials/npc lots
+            }
+            else if (spec.Game == FromGame.DS3 && Params.ContainsKey("ItemLotParam"))
             {
                 foreach (PARAM.Row row in Params["ItemLotParam"].Rows)
                 {
@@ -417,9 +509,9 @@ namespace SoulsIds
                         MSB3.Part part = obj as MSB3.Part;
                         if (part == null) continue;
                         Obj partObj = Obj.Part(location, part.Name);
-                        if (part.EventEntityID != -1)
+                        if (part.EntityID != -1)
                         {
-                            u.Add(Verb.CONTAINS, Obj.Entity(part.EventEntityID), partObj);
+                            u.Add(Verb.CONTAINS, Obj.Entity(part.EntityID), partObj);
                         }
                         if (part is MSB3.Part.Enemy enemy)
                         {

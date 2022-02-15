@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -30,10 +30,13 @@ namespace SoulsIds
             NPC,
             MATERIAL,
             SKILL,
+            // Item types in order
             WEAPON,
             PROTECTOR,
             ACCESSORY,
             GOODS,
+            GEM,
+            ARTS,
             TALK,
             DIALOGUE,
             ENTITY,
@@ -115,7 +118,7 @@ namespace SoulsIds
 
             public static Obj Item(uint type, int id) {
                 Namespace n;
-                if (type > 4)
+                if (type > 10)
                 {
                     n = Namespace.WEAPON + LotTypes[type];
                 }
