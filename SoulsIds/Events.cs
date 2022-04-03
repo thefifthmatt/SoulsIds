@@ -826,6 +826,10 @@ namespace SoulsIds
                 {
                     instr[i] = val;
                 }
+                else if (instr.Args[i] is uint uk && changes.TryGetValue((int)uk, out val))
+                {
+                    instr[i] = (uint)val;
+                }
             }
         }
 
@@ -991,8 +995,14 @@ namespace SoulsIds
 
         public bool ParseArgSpec(string arg, out int pos)
         {
+            return TryArgSpec(arg, out pos);
+        }
+
+        public static bool TryArgSpec(string arg, out int pos)
+        {
             // For event initializations with int args specified as X0, X4, X8, etc., return the arg position, e.g. 0, 1, 2
             pos = 0;
+            if (arg == null) return false;
             if (arg.StartsWith("X") && int.TryParse(arg.Substring(1), out pos) && pos >= 0)
             {
                 pos /= 4;

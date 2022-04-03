@@ -41,19 +41,14 @@ namespace SoulsIds
                 {
                     throw new Exception($"Failed to load param {paramPath}: " + e);
                 }
-                if (defs.TryGetValue(param.ParamType, out PARAMDEF def))
+                if (defs != null && defs.Count > 0)
                 {
-                    if (def.GetRowSize() == param.DetectedSize)
+                    if (!param.ApplyParamdefCarefully(defs.Values))
                     {
-                        param.ApplyParamdef(def);
-                        return param;
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Mismatched size for {paramPath} - {def.GetRowSize()} vs {param.DetectedSize} actual");
+                        Console.WriteLine($"No applicable paramdef found for {paramPath} ({param.DetectedSize} size)");
                     }
                 }
-                return null;
+                return param;
             });
         }
 
@@ -112,6 +107,7 @@ namespace SoulsIds
             if (allowMissing && !File.Exists(path)) return new Dictionary<T, string>();
             foreach (var line in File.ReadLines(path))
             {
+                if (line.StartsWith("#")) continue;
                 int spot = line.IndexOf(' ');
                 if (spot == -1)
                 {
@@ -220,14 +216,21 @@ namespace SoulsIds
             return ret;
         }
 
-        // Reads bnd
-        private IBinder ReadBnd(string path)
+        // Multi-reader based on path
+        // This seems to inconsistently strip compression metadata, so TODO check all usages.
+        public IBinder ReadBnd(string path)
         {
             try
             {
-                if (Spec.Game == FromGame.DS3 && path.EndsWith("Data0.bdt"))
+                string detectPath = path;
+                if (detectPath.EndsWith("bak")) detectPath = detectPath.Substring(0, detectPath.LastIndexOf('.'));
+                if (Spec.Game == FromGame.DS3 && detectPath.EndsWith("Data0.bdt"))
                 {
                     return SFUtil.DecryptDS3Regulation(path);
+                }
+                if (Spec.Game == FromGame.ER && detectPath.EndsWith("regulation.bin"))
+                {
+                    return SFUtil.DecryptERRegulation(path);
                 }
                 byte[] data = File.ReadAllBytes(path);
                 if (DCX.Is(data))
@@ -250,7 +253,36 @@ namespace SoulsIds
             }
         }
 
+        // Writes using similar selection logic as ReadBnd
+        public void WriteBnd(string outPath, IBinder bnd, DCX.Type dcx)
+        {
+            if (bnd is BND4 bnd4)
+            {
+                if (Spec.Game == FromGame.DS3 && outPath.EndsWith("Data0.bdt"))
+                {
+                    bnd4.Compression = dcx;
+                    SFUtil.EncryptDS3Regulation(outPath, bnd4);
+                    if (new FileInfo(outPath).Length > 0x10000C)
+                    {
+                        File.Delete(outPath);
+                        throw new Exception($"You must set loadLooseParams=1 in modengine.ini. Otherwise Data0.bdt is too large and will permanently corrupt your save file.");
+                    }
+                }
+                else if (Spec.Game == FromGame.ER && outPath.EndsWith("regulation.bin"))
+                {
+                    bnd4.Compression = dcx;
+                    SFUtil.EncryptERRegulation(outPath, bnd4);
+                }
+                else
+                {
+                    bnd4.Write(outPath, dcx);
+                }
+            }
+            if (bnd is BND3 bnd3) bnd3.Write(outPath, dcx);
+        }
+
         // Overrides bnd, relative to current dir, and outputs to directory, relative to game dir if not absolute path
+        // This is the second-worst method. Is anything using this?
         public void OverrideBnd<T>(string path, string toDir, Dictionary<string, T> diffData, Func<T, byte[]> writer, string fileExt = null)
         {
             string fname = Path.GetFileName(path);
@@ -259,10 +291,20 @@ namespace SoulsIds
         }
 
         // Overrides bnd, relative to current dir, and outputs to other file
-        public void OverrideBndRel<T>(string path, string outPath, Dictionary<string, T> diffData, Func<T, byte[]> writer, string fileExt=null)
+        public void OverrideBndRel<T>(string path, string outPath, Dictionary<string, T> diffData, Func<T, byte[]> writer, string fileExt = null, DCX.Type dcx = DCX.Type.Unknown)
         {
-            if (Spec.Dcx == DCX.Type.Unknown) throw new Exception("DCX encoding not provided");
-            string fname = Path.GetFileName(path);
+            if (dcx == DCX.Type.Unknown)
+            {
+                if (Spec.Dcx == DCX.Type.Unknown) throw new Exception("DCX compression type not provided");
+                dcx = Spec.Dcx;
+            }
+            IBinder bnd = GetOverrideBndRel(path, diffData, writer, fileExt);
+            WriteBnd(outPath, bnd, dcx);
+        }
+
+        // A get method version, mainly for adding extra files before writing
+        public IBinder GetOverrideBndRel<T>(string path, Dictionary<string, T> diffData, Func<T, byte[]> writer, string fileExt = null)
+        {
             IBinder bnd = ReadBnd(path);
             foreach (BinderFile file in bnd.Files)
             {
@@ -271,33 +313,22 @@ namespace SoulsIds
                 if (!diffData.ContainsKey(bndName) || diffData[bndName] == null) continue;
                 try
                 {
-                    file.Bytes = writer(diffData[bndName]);
+                    byte[] data = writer(diffData[bndName]);
+                    if (data != null)
+                    {
+                        file.Bytes = data;
+                    }
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Failed to load {path}: {bndName}: {ex}");
                 }
             }
-            if (bnd is BND4 bnd4)
-            {
-                if (Spec.Game == FromGame.DS3 && outPath.EndsWith("Data0.bdt"))
-                {
-                    SFUtil.EncryptDS3Regulation(outPath, bnd4);
-                    if (new FileInfo(outPath).Length > 0x10000C)
-                    {
-                        File.Delete(outPath);
-                        throw new Exception($"You must set loadLooseParams=1 in modengine.ini. Otherwise Data0.bdt is too large and will permanently corrupt your save file.");
-                    }
-                }
-                else
-                {
-                    bnd4.Write(outPath, Spec.Dcx);
-                }
-            }
-            if (bnd is BND3 bnd3) bnd3.Write(outPath, Spec.Dcx);
+            return bnd;
         }
 
         // Overrides bnds, relative to game dir, and outputs to directory, relative to game dir if relative
+        // This is basically the worst method. Is anything using it anymore?
         public void OverrideBnds<T>(string fromDir, string toDir, Dictionary<string, Dictionary<string, T>> diffBnds, Func<T, byte[]> writer, string ext = "*bnd.dcx", string fileExt = null)
         {
             if (Spec.GameDir == null) throw new Exception("Base game dir not provided");

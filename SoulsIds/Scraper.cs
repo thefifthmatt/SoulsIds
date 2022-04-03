@@ -16,43 +16,44 @@ namespace SoulsIds
         {
             // DS3 and Sekiro
             { "NPC\u540d", Namespace.NPC },
-            { "\u6b66\u5668\u540d", Namespace.WEAPON },
-            { "\u30a2\u30a4\u30c6\u30e0\u540d", Namespace.GOODS },
-            { "\u30a4\u30d9\u30f3\u30c8\u30c6\u30ad\u30b9\u30c8", Namespace.ACTION },
-            { "\u4f1a\u8a71", Namespace.DIALOGUE },
-            { "\u4f1a\u8a71_dlc1", Namespace.DIALOGUE },
-            { "\u4f1a\u8a71_dlc2", Namespace.DIALOGUE },
-            { "\u9632\u5177\u540d", Namespace.PROTECTOR },
-            { "\u30a2\u30af\u30bb\u30b5\u30ea\u540d", Namespace.ACCESSORY },
+            { "\u6b66\u5668\u540d", Namespace.Weapon },
+            { "\u30a2\u30a4\u30c6\u30e0\u540d", Namespace.Goods },
+            { "\u30a4\u30d9\u30f3\u30c8\u30c6\u30ad\u30b9\u30c8", Namespace.Action },
+            { "\u4f1a\u8a71", Namespace.Dialogue },
+            { "\u4f1a\u8a71_dlc1", Namespace.Dialogue },
+            { "\u4f1a\u8a71_dlc2", Namespace.Dialogue },
+            { "\u9632\u5177\u540d", Namespace.Protector },
+            { "\u30a2\u30af\u30bb\u30b5\u30ea\u540d", Namespace.Accessory },
             // DS1
-            { "Weapon_name_", Namespace.WEAPON },
-            { "Armor_name_", Namespace.PROTECTOR },
-            { "Accessory_name_", Namespace.ACCESSORY },
-            { "Item_name_", Namespace.GOODS },
-            { "Event_text_", Namespace.ACTION },
-            { "Conversation_", Namespace.DIALOGUE },
+            { "Weapon_name_", Namespace.Weapon },
+            { "Armor_name_", Namespace.Protector },
+            { "Accessory_name_", Namespace.Accessory },
+            { "Item_name_", Namespace.Goods },
+            { "Event_text_", Namespace.Action },
+            { "Conversation_", Namespace.Dialogue },
             // DS2
-            { "mapevent", Namespace.ACTION },
+            { "mapevent", Namespace.Action },
             { "npcmenu", Namespace.NPC },
-            { "itemname", Namespace.GOODS },
-            { "bonfirename", Namespace.BONFIRE },
+            { "itemname", Namespace.Goods },
+            { "bonfirename", Namespace.Bonfire },
             // ER
             { "NpcName", Namespace.NPC },
-            { "WeaponName", Namespace.WEAPON },
-            { "ProtectorName", Namespace.PROTECTOR },
-            { "AccessoryName", Namespace.ACCESSORY },
-            { "GoodsName", Namespace.GOODS },
-            { "GemName", Namespace.GEM },
-            { "ArtsName", Namespace.ARTS },
-            { "EventTextForTalk", Namespace.ACTION },
-            { "TalkMsg", Namespace.DIALOGUE },
+            { "WeaponName", Namespace.Weapon },
+            { "ProtectorName", Namespace.Protector },
+            { "AccessoryName", Namespace.Accessory },
+            { "GoodsName", Namespace.Goods },
+            { "GemName", Namespace.Gem },
+            { "ArtsName", Namespace.Arts },
+            { "EventTextForTalk", Namespace.Action },
+            { "ActionButtonText", Namespace.ActionButtonText },
+            { "TalkMsg", Namespace.Dialogue },
         };
         public static readonly Dictionary<Namespace, string> ItemParams = new Dictionary<Namespace, string>
         {
-            { Namespace.WEAPON, "EquipParamWeapon" },
-            { Namespace.PROTECTOR, "EquipParamProtector" },
-            { Namespace.ACCESSORY, "EquipParamAccessory" },
-            { Namespace.GOODS, "EquipParamGoods" },
+            { Namespace.Weapon, "EquipParamWeapon" },
+            { Namespace.Protector, "EquipParamProtector" },
+            { Namespace.Accessory, "EquipParamAccessory" },
+            { Namespace.Goods, "EquipParamGoods" },
         };
 
         private GameSpec spec;
@@ -87,7 +88,7 @@ namespace SoulsIds
             // Just add the male lines for the moment... they have the same talk id
             [FromGame.DS3] = "PcGenderFemale1",
             [FromGame.SDT] = "TalkParamId1",
-            [FromGame.ER] = "TalkParamId1",
+            [FromGame.ER] = "msgId",
         };
         public bool ScrapeMsgs(Universe u)
         {
@@ -123,7 +124,7 @@ namespace SoulsIds
                 int dialogue = (int)row[msgId].Value;
                 if (dialogue > 0)
                 {
-                    Obj dialogueObj = Obj.Of(Namespace.DIALOGUE, dialogue);
+                    Obj dialogueObj = Obj.Of(Namespace.Dialogue, dialogue);
                     if (u.Names.ContainsKey(dialogueObj))
                     {
                         u.Names[Obj.Talk((int)row.ID)] = u.Names[dialogueObj];
@@ -217,24 +218,25 @@ namespace SoulsIds
                     foreach (PARAM.Row row in Params[$"ItemLotParam_{variant}"].Rows)
                     {
                         Obj lot = Obj.Lot((int)row.ID);
-                        int eventFlag = (int)row["getItemFlagId"].Value;
-                        if (eventFlag != -1)
+                        uint eventFlag = (uint)row["getItemFlagId"].Value;
+                        if (eventFlag != 0)
                         {
                             u.Add(Verb.WRITES, lot, Obj.EventFlag(eventFlag));
                         }
-                        Dictionary<uint, Namespace> typeMapping = new Dictionary<uint, Namespace>
+                        Dictionary<int, Namespace> typeMapping = new Dictionary<int, Namespace>
                         {
                             // The enum order is WEAPON PROTECTOR ACCESSORY GOODS (GEM ART)
-                            [1] = Namespace.GOODS,
-                            [2] = Namespace.WEAPON,
-                            [3] = Namespace.PROTECTOR,
-                            [4] = Namespace.ACCESSORY,
-                            [5] = Namespace.GEM,
+                            [1] = Namespace.Goods,
+                            [2] = Namespace.Weapon,
+                            [3] = Namespace.Protector,
+                            [4] = Namespace.Accessory,
+                            [5] = Namespace.Gem,
+                            [6] = Namespace.Global,  // TODO: This is the own weapon
                         };
                         for (int i = 1; i <= 8; i++)
                         {
-                            int id = (int)row[$"ItemLotId{i}"].Value;
-                            uint type = (uint)row[$"LotItemCategory0{i}"].Value;
+                            int id = (int)row[$"lotItemId0{i}"].Value;
+                            int type = (int)row[$"lotItemCategory0{i}"].Value;
                             if (id != 0 && type != 0)
                             {
                                 Namespace itemType = typeMapping[type];
@@ -243,6 +245,10 @@ namespace SoulsIds
                                 if (u.Names.ContainsKey(item) && !u.Names.ContainsKey(lot))
                                 {
                                     u.Names[lot] = u.Names[item];
+                                    if (eventFlag != 0 && !u.Names.ContainsKey(Obj.EventFlag(eventFlag)))
+                                    {
+                                        u.Names[Obj.EventFlag(eventFlag)] = $"{lot}:{u.Names[lot]}";
+                                    }
                                 }
                             }
                         }
@@ -254,31 +260,56 @@ namespace SoulsIds
 
                     Obj shop = Obj.Shop((int)row.ID);
 
-                    int eventFlag = (int)row["EventFlag"].Value;
-                    if (eventFlag != -1)
+                    uint eventFlag = (uint)row["eventFlag_forStock"].Value;
+                    if (eventFlag != 0)
                     {
                         u.Add(Verb.WRITES, shop, Obj.EventFlag(eventFlag));
                     }
 
-                    int qwc = (int)row["qwcID"].Value;
-                    if (qwc != -1)
+                    uint qwc = (uint)row["eventFlag_forRelease"].Value;
+                    if (qwc != 0)
                     {
                         u.Add(Verb.READS, shop, Obj.EventFlag(qwc));
                     }
 
                     int type = (byte)row["equipType"].Value;
-                    int id = (int)row["EquipId"].Value;
-                    List<Obj> objs = new List<uint> { 0, 1, 2, 3, 4, 5 }.Select(t => Obj.Item(t, id)).Where(t => u.Names.ContainsKey(t) && !string.IsNullOrEmpty(u.Names[t])).ToList();
-                    Console.WriteLine($"shop {row.ID}: for type {type}, these exist: {string.Join(", ", objs.Select(o => $"{o}={u.Names[o]}"))}");
+                    int id = (int)row["equipId"].Value;
+                    // List<Obj> objs = new List<uint> { 0, 1, 2, 3, 4, 5 }.Select(t => Obj.Item(t, id)).Where(t => u.Names.ContainsKey(t) && !string.IsNullOrEmpty(u.Names[t])).ToList();
+                    // Console.WriteLine($"shop {row.ID}: for type {type}, these exist: {string.Join(", ", objs.Select(o => $"{o}={u.Names[o]}"))}");
 
                     Obj item = Obj.Item((uint)type, id);
                     u.Add(Verb.PRODUCES, shop, item);
-                    if (u.Names.ContainsKey(item)) u.Names[shop] = u.Names[item];
+                    if (u.Names.ContainsKey(item))
+                    {
+                        u.Names[shop] = u.Names[item];
+                        if (eventFlag != 0)
+                        {
+                            u.Names[Obj.EventFlag(eventFlag)] = $"{shop}:{u.Names[shop]}";
+                        }
+                    }
 
                     int material = (int)row["mtrlId"].Value;
                     if (material != -1)
                     {
                         u.Add(Verb.CONSUMES, shop, Obj.Material(material));
+                    }
+                }
+                foreach (PARAM.Row row in Params["GestureParam"].Rows)
+                {
+                    Obj item = Obj.Of(Namespace.Goods, (int)row["itemId"].Value);
+                    if (u.Names.ContainsKey(item))
+                    {
+                        Obj gesture = Obj.Of(Namespace.Gesture, row.ID);
+                        u.Names[gesture] = u.Names[item];
+                    }
+                }
+                foreach (PARAM.Row row in Params["ActionButtonParam"].Rows)
+                {
+                    Obj actionText = Obj.Of(Namespace.ActionButtonText, (int)row["textId"].Value);
+                    if (u.Names.ContainsKey(actionText))
+                    {
+                        Obj action = Obj.Of(Namespace.ActionButton, row.ID);
+                        u.Names[action] = u.Names[actionText];
                     }
                 }
                 // Can also add materials/npc lots
@@ -365,8 +396,8 @@ namespace SoulsIds
             foreach (KeyValuePair<string, string> entry in editor.LoadNames("ModelName", n => n, true))
             {
                 // Maybe should combine these namespaces...
-                u.Names[Obj.Of(Namespace.OBJ_MODEL, entry.Key)] = entry.Value;
-                u.Names[Obj.Of(Namespace.CHR_MODEL, entry.Key)] = entry.Value;
+                u.Names[Obj.Of(Namespace.ObjModel, entry.Key)] = entry.Value;
+                u.Names[Obj.Of(Namespace.ChrModel, entry.Key)] = entry.Value;
             }
             foreach (KeyValuePair<int, string> entry in editor.LoadNames("CharaInitParam", n => int.Parse(n), true))
             {
@@ -374,7 +405,7 @@ namespace SoulsIds
             }
             foreach (KeyValuePair<int, string> entry in editor.LoadNames("ShopQwc", n => int.Parse(n), true))
             {
-                u.Names[Obj.Of(Namespace.EVENT_FLAG, entry.Key)] = entry.Value;
+                u.Names[Obj.Of(Namespace.EventFlag, entry.Key)] = entry.Value;
             }
         }
         public bool ScrapeMaps(Universe u)

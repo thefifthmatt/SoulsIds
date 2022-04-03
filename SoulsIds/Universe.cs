@@ -19,43 +19,46 @@ namespace SoulsIds
         public enum Namespace
         {
             // Meta namespaces
-            GLOBAL,
-            ITEM,
+            Global,
+            Item,
             // More-or-less unique namespaces
-            EVENT,
-            EVENT_FLAG,
+            Event,
+            EventFlag,
             ESD,
-            LOT,
-            SHOP,
+            Lot,
+            Shop,
             NPC,
-            MATERIAL,
-            SKILL,
+            Material,
+            Skill,
             // Item types in order
-            WEAPON,
-            PROTECTOR,
-            ACCESSORY,
-            GOODS,
-            GEM,
-            ARTS,
-            TALK,
-            DIALOGUE,
-            ENTITY,
-            PART,
-            OBJ_MODEL,
-            CHR_MODEL,
-            TREASURE,
-            MAP,
-            BONFIRE,
-            HUMAN,
-            ACTION,
+            Weapon,
+            Protector,
+            Accessory,
+            Goods,
+            Gem,
+            Arts,
+            Talk,
+            Dialogue,
+            Entity,
+            Part,
+            ObjModel,
+            ChrModel,
+            Treasure,
+            Map,
+            Bonfire,
+            Human,
+            Action,
+            ActionButton,
+            ActionButtonText,
+            Gesture,
             // In future
-            CUTSCENE,
-            ACHIEVEMENT,
-            ANIMATION,
-            SP_EFFECT,
+            Cutscene,
+            Achievement,
+            Animation,
+            SpEffect,
             SFX,
         }
-        private static HashSet<Namespace> Quotes = new HashSet<Namespace> { Namespace.ACTION, Namespace.DIALOGUE, Namespace.TALK };
+        private static HashSet<Namespace> Quotes = new HashSet<Namespace> { Namespace.Action, Namespace.Dialogue, Namespace.Talk, Namespace.ActionButton };
         public class Obj : IComparable<Obj>
         {
             public string ID { get; set; }
@@ -78,10 +81,10 @@ namespace SoulsIds
             }
             public bool HasType(Namespace n)
             {
-                if (n == Namespace.GLOBAL) return true;
-                if (n == Namespace.ITEM)
+                if (n == Namespace.Global) return true;
+                if (n == Namespace.Item)
                 {
-                    return (int)Type >= (int)Namespace.WEAPON && (int)Type <= (int)Namespace.GOODS;
+                    return (int)Type >= (int)Namespace.Weapon && (int)Type <= (int)Namespace.Goods;
                 }
                 return n == Type;
             }
@@ -94,24 +97,25 @@ namespace SoulsIds
             }
 
             // Helpers
-            public static Obj Lot(int id) => new Obj(id, Namespace.LOT);
-            public static Obj Shop(int id, int end=-1) => new Obj(id, Namespace.SHOP, end);
-            public static Obj EventFlag(int id, int end=-1) => new Obj(id, Namespace.EVENT_FLAG, end);
-            public static Obj Talk(int id) => new Obj(id, Namespace.TALK);
-            public static Obj Action(int id) => new Obj(id, Namespace.ACTION);
+            public static Obj Lot(int id) => new Obj(id, Namespace.Lot);
+            public static Obj Shop(int id, int end=-1) => new Obj(id, Namespace.Shop, end);
+            public static Obj EventFlag(int id, int end=-1) => new Obj(id, Namespace.EventFlag, end);
+            public static Obj EventFlag(uint id, int end = -1) => new Obj(id, Namespace.EventFlag, end);
+            public static Obj Talk(int id) => new Obj(id, Namespace.Talk);
+            public static Obj Action(int id) => new Obj(id, Namespace.Action);
             public static Obj Esd(int id) => new Obj(id, Namespace.ESD);
             public static Obj Npc(int id) => new Obj(id, Namespace.NPC);
-            public static Obj Material(int id) => new Obj(id, Namespace.MATERIAL);
-            public static Obj Skill(int id) => new Obj(id, Namespace.SKILL);
-            public static Obj Map(string id) => new Obj(id, Namespace.MAP);
-            public static Obj Entity(int id) => new Obj(id, Namespace.ENTITY);
-            public static Obj Part(string map, string id) => new Obj($"{map}_{id}", Namespace.PART);
-            public static Obj ObjModel(string id) => new Obj(id, Namespace.OBJ_MODEL);
-            public static Obj ChrModel(string id) => new Obj(id, Namespace.CHR_MODEL);
-            public static Obj Treasure(string map, int index) => new Obj($"{map}_{index}", Namespace.TREASURE);
-            public static Obj Dialogue(int id) => new Obj(id, Namespace.DIALOGUE);
-            public static Obj Bonfire(int id) => new Obj(id, Namespace.BONFIRE);
-            public static Obj Human(int id) => new Obj(id, Namespace.HUMAN);
+            public static Obj Material(int id) => new Obj(id, Namespace.Material);
+            public static Obj Skill(int id) => new Obj(id, Namespace.Skill);
+            public static Obj Map(string id) => new Obj(id, Namespace.Map);
+            public static Obj Entity(int id) => new Obj(id, Namespace.Entity);
+            public static Obj Part(string map, string id) => new Obj($"{map}_{id}", Namespace.Part);
+            public static Obj ObjModel(string id) => new Obj(id, Namespace.ObjModel);
+            public static Obj ChrModel(string id) => new Obj(id, Namespace.ChrModel);
+            public static Obj Treasure(string map, int index) => new Obj($"{map}_{index}", Namespace.Treasure);
+            public static Obj Dialogue(int id) => new Obj(id, Namespace.Dialogue);
+            public static Obj Bonfire(int id) => new Obj(id, Namespace.Bonfire);
+            public static Obj Human(int id) => new Obj(id, Namespace.Human);
 
             // For names
             public static Obj Of(Namespace type, object id) => new Obj(id, type);
@@ -120,11 +124,11 @@ namespace SoulsIds
                 Namespace n;
                 if (type > 10)
                 {
-                    n = Namespace.WEAPON + LotTypes[type];
+                    n = Namespace.Weapon + LotTypes[type];
                 }
                 else
                 {
-                    n = Namespace.WEAPON + (int)type;
+                    n = Namespace.Weapon + (int)type;
                 }
                 return new Obj(id.ToString(), n);
             }
@@ -173,12 +177,12 @@ namespace SoulsIds
             }
             return $"{obj}";
         }
-        public List<Obj> Next(Obj obj, Verb v, Namespace type=Namespace.GLOBAL)
+        public List<Obj> Next(Obj obj, Verb v, Namespace type=Namespace.Global)
         {
             if (!Nodes.ContainsKey(obj)) return new List<Obj>();
             return Nodes[obj].To.Where(r => r.Verb == v && r.To.HasType(type)).Select(r => r.To).ToList();
         }
-        public List<Obj> Prev(Obj obj, Verb v, Namespace type=Namespace.GLOBAL)
+        public List<Obj> Prev(Obj obj, Verb v, Namespace type=Namespace.Global)
         {
             if (!Nodes.ContainsKey(obj)) return new List<Obj>();
             return Nodes[obj].From.Where(r => r.Verb == v && r.From.HasType(type)).Select(r => r.From).ToList();
@@ -238,11 +242,11 @@ namespace SoulsIds
             // Optional
             public Namespace Type { get; set; }
             // Opposite subject treatment from PartialRelation, hm. Should give PartialRelation a better name
-            public static RelationSpec Verbs(Verb verb, Namespace type=Namespace.GLOBAL)
+            public static RelationSpec Verbs(Verb verb, Namespace type=Namespace.Global)
             {
                 return new RelationSpec { Verb = verb, Subject = true, Type = type };
             }
-            public static RelationSpec VerbedBy(Verb verb, Namespace type = Namespace.GLOBAL)
+            public static RelationSpec VerbedBy(Verb verb, Namespace type = Namespace.Global)
             {
                 return new RelationSpec { Verb = verb, Subject = false, Type = type };
             }

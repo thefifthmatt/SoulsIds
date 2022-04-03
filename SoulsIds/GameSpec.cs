@@ -111,11 +111,11 @@ namespace SoulsIds
             [FromGame.ER] = new GameSpec
             {
                 Dcx = (DCX.Type)DCX.DefaultType.Sekiro,
-                GameDir = @"C:\Program Files (x86)\Steam\steamapps\common\Elden Ring",
+                GameDir = @"C:\Program Files (x86)\Steam\steamapps\common\ELDEN RING\Game",
                 EsdDir = @"script\talk",
                 MsgDir = @"msg\engus",
                 MsbDir = @"map\mapstudio",
-                ParamFile = @"param\gameparam\gameparam.parambnd.dcx",
+                ParamFile = "regulation.bin",
                 // NameDir = @"dist\ER\Names",
                 DefDir = @"dist\ER\Defs",
             },

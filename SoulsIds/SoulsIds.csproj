@@ -60,6 +60,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EMEDF.cs" />
+    <Compile Include="AST.cs" />
     <Compile Include="Events.cs" />
     <Compile Include="GameEditor.cs" />
     <Compile Include="GameSpec.cs" />
