@@ -45,7 +45,7 @@ namespace SoulsIds
                 {
                     if (!param.ApplyParamdefCarefully(defs.Values))
                     {
-                        Console.WriteLine($"No applicable paramdef found for {paramPath} ({param.DetectedSize} size)");
+                        // Console.WriteLine($"No applicable paramdef found for {paramPath} ({param.DetectedSize} size)");
                     }
                 }
                 return param;
@@ -363,6 +363,36 @@ namespace SoulsIds
             {
                 to.Cells[i].Value = from.Cells[i].Value;
             }
+        }
+
+        public static PARAM.Row AddRow(PARAM param, int id, int oldId = -1)
+        {
+            PARAM.Row oldRow = null;
+            if (oldId >= 0)
+            {
+                oldRow = param[oldId];
+                if (oldRow == null)
+                {
+                    throw new ArgumentException($"Row id {oldId} in {param.AppliedParamdef?.ParamType} does not exist. Cannot copy to row {id}");
+                }
+            }
+            return AddRow(param, id, oldRow);
+        }
+
+        public static PARAM.Row AddRow(PARAM param, int id, PARAM.Row oldRow)
+        {
+            if (param[id] != null)
+            {
+                // This can get quadratic, but good to check
+                throw new ArgumentException($"Trying to add row id {id} in {param.AppliedParamdef?.ParamType} but it already exists");
+            }
+            PARAM.Row row = new PARAM.Row(id, "", param.AppliedParamdef);
+            param.Rows.Add(row);
+            if (oldRow != null)
+            {
+                CopyRow(oldRow, row);
+            }
+            return row;
         }
     }
 }

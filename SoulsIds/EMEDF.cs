@@ -96,6 +96,8 @@ namespace SoulsIds
 
             // Calculated values
 
+            public int Offset { get; set; }
+
             public EnumDoc EnumDoc { get; set; }
 
             public object GetDisplayValue(object val) => EnumDoc == null ? val : EnumDoc.GetDisplayValue(val);
@@ -110,6 +112,8 @@ namespace SoulsIds
             public Dictionary<string, string> Values { get; set; }
 
             // Calculated values
+
+            public string DisplayName { get; set; }
 
             public Dictionary<string, string> DisplayValues { get; set; }
 
