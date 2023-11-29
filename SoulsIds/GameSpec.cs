@@ -27,7 +27,7 @@ namespace SoulsIds
 
         public GameSpec Clone() => (GameSpec)MemberwiseClone();
 
-        public enum FromGame { UNKNOWN, DS1, DS1R, DS2, DS2S, BB, DS3, SDT, ER }
+        public enum FromGame { UNKNOWN, DS1, DS1R, DS2, DS2S, BB, DS3, SDT, ER, AC6 }
         public static GameSpec ForGame(FromGame game)
         {
             GameSpec spec = Games.TryGetValue(game, out GameSpec baseSpec) ? baseSpec.Clone() : new GameSpec();
@@ -110,14 +110,26 @@ namespace SoulsIds
             },
             [FromGame.ER] = new GameSpec
             {
-                Dcx = (DCX.Type)DCX.DefaultType.Sekiro,
+                Dcx = (DCX.Type)DCX.DefaultType.EldenRing,
                 GameDir = @"C:\Program Files (x86)\Steam\steamapps\common\ELDEN RING\Game",
                 EsdDir = @"script\talk",
                 MsgDir = @"msg\engus",
                 MsbDir = @"map\mapstudio",
                 ParamFile = "regulation.bin",
-                // NameDir = @"dist\ER\Names",
+                NameDir = @"dist\ER\Names",
                 DefDir = @"dist\ER\Defs",
+            },
+            [FromGame.AC6] = new GameSpec
+            {
+                // TODO: Update
+                Dcx = (DCX.Type)DCX.DefaultType.Sekiro,
+                GameDir = @"C:\Program Files (x86)\Steam\steamapps\common\ARMORED CORE VI FIRES OF RUBICON\Game",
+                EsdDir = @"script\talk",
+                MsgDir = @"msg\engus",
+                MsbDir = @"map\mapstudio",
+                ParamFile = "regulation.bin",
+                NameDir = @"dist\AC6\Names",
+                DefDir = @"dist\AC6\Defs",
             },
         };
     }

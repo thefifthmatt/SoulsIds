@@ -551,6 +551,7 @@ namespace SoulsIds
             }
             return id.ToString();
         }
+        public static string FormatMachine(long id) => FormatMachine((int)id);
 
         public static int MachineForIndex(int diffpart) => 0x7FFFFFFF - diffpart;
 
@@ -605,6 +606,28 @@ namespace SoulsIds
         }
 
         public static readonly Expr Pass = MakeVal(1);
+        public static Expr NegateCond(Expr expr) => new BinaryExpr { Op = "==", Lhs = expr, Rhs = MakeVal(0) };
+
+        public static Expr ChainExprs(string op, IEnumerable<Expr> parts)
+        {
+            Expr ret = null;
+            foreach (Expr part in parts)
+            {
+                if (part == null)
+                {
+                    continue;
+                }
+                if (ret == null)
+                {
+                    ret = part;
+                }
+                else
+                {
+                    ret = new BinaryExpr { Op = op, Lhs = ret, Rhs = part };
+                }
+            }
+            return ret;
+        }
 
         public static (long, ESD.State) AllocateState(Dictionary<long, ESD.State> states, ref long baseId)
         {

@@ -28,8 +28,20 @@ namespace SoulsIds
             return LoadParams($@"{Spec.GameDir}\{Spec.ParamFile}", defs);
         }
 
+        public Dictionary<string, string> LoadTentativeMapping()
+        {
+            Dictionary<string, string> tentative = new Dictionary<string, string>();
+            string tentativePath = $@"{Spec.DefDir}\TentativeParamType.csv";
+            if (File.Exists(tentativePath))
+            {
+                tentative = File.ReadAllLines(tentativePath).Skip(1).Select(l => l.Split(',')).ToDictionary(p => p[0], p => p[1]);
+            }
+            return tentative;
+        }
+
         public Dictionary<string, PARAM> LoadParams(string path, Dictionary<string, PARAMDEF> defs)
         {
+            Dictionary<string, string> tentative = LoadTentativeMapping();
             return LoadBnd(path, (data, paramPath) =>
             {
                 PARAM param;
@@ -43,9 +55,11 @@ namespace SoulsIds
                 }
                 if (defs != null && defs.Count > 0)
                 {
-                    if (!param.ApplyParamdefCarefully(defs.Values))
+                    // Can also check string.IsNullOrEmpty(param.ParamType) - depends on future version weirdness
+                    tentative.TryGetValue(paramPath, out string overrideType);
+                    if (!ParamDictionary.ApplyParamdefCarefully(param, defs.Values, overrideType))
                     {
-                        // Console.WriteLine($"No applicable paramdef found for {paramPath} ({param.DetectedSize} size)");
+                        // Console.WriteLine($"No applicable paramdef found for {paramPath} ({param.DetectedSize} size, {param.ParamdefDataVersion} version)");
                     }
                 }
                 return param;
@@ -195,6 +209,7 @@ namespace SoulsIds
                     // TODO: Check this is okay, rather than printing
                     throw new Exception($"Failed to load {path}: {bndName}: {ex}");
                 }
+                // Console.WriteLine($"{file.ID}: {file.Name}");
             }
             return bnds;
         }
@@ -228,9 +243,13 @@ namespace SoulsIds
                 {
                     return SFUtil.DecryptDS3Regulation(path);
                 }
-                if (Spec.Game == FromGame.ER && detectPath.EndsWith("regulation.bin"))
+                else if (Spec.Game == FromGame.ER && detectPath.EndsWith(".bin"))
                 {
                     return SFUtil.DecryptERRegulation(path);
+                }
+                else if (Spec.Game == FromGame.AC6 && detectPath.EndsWith(".bin"))
+                {
+                    return SFUtil.DecryptAC6Regulation(path);
                 }
                 byte[] data = File.ReadAllBytes(path);
                 if (DCX.Is(data))
@@ -393,6 +412,17 @@ namespace SoulsIds
                 CopyRow(oldRow, row);
             }
             return row;
+        }
+
+        public static Dictionary<int, PARAM.Row> ParamToDictionary(PARAM p)
+        {
+            Dictionary<int, PARAM.Row> rows = new Dictionary<int, PARAM.Row>(p.Rows.Count);
+            foreach (PARAM.Row r in p.Rows)
+            {
+                // Use first row in order
+                rows.TryAdd(r.ID, r);
+            }
+            return rows;
         }
     }
 }

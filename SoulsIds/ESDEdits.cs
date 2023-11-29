@@ -2,11 +2,97 @@
 using System.Linq;
 using System.Collections.Generic;
 using SoulsFormats;
+using static Org.BouncyCastle.Math.EC.ECCurve;
+using System.Globalization;
 
 namespace SoulsIds
 {
     public class ESDEdits
     {
+        // Used to chain the state into the next one
+        public static void ShowDialog(ESD.State state, long nextId, int msg)
+        {
+            // c1_17 OpenGenericDialog
+            state.EntryCommands.Add(AST.MakeCommand(1, 17, 7, msg, 1, 0, 1));
+            // f58 CheckSpecificPersonGenericDialogIsOpen
+            AST.Expr noDialogExpr = new AST.BinaryExpr { Op = "==", Lhs = AST.MakeFunction("f58", 0), Rhs = AST.MakeVal(0) };
+            state.Conditions.Add(new ESD.Condition(nextId, AST.AssembleExpression(noDialogExpr)));
+        }
+
+        // Returns trailing states corresponding to each message, then another one for cancelling out of the menu.
+        public static List<ESD.State> OpenSubmenu(Dictionary<long, ESD.State> machine, ESD.State state, List<(int, AST.Expr)> msgs, ref long optId)
+        {
+            // There's also ClearTalkActionState, can probably be ignored? Also try without c1_110 for now, it's already been used.
+            // c1_20 ClearTalkListData()
+            state.EntryCommands.Add(AST.MakeCommand(1, 20));
+            // c1_110 MainMenuFlag()
+            // nextCheckState.EntryCommands.Add(AST.MakeCommand(1, 110));
+
+            // Every item has several talk list entries with (expr, branch id), and each branch has a set of items.
+            // AddTalkListDataIf could also be used, but the conditions make it simpler to nest it exclusively.
+            List<AST.Expr> talkListConds = new List<AST.Expr>();
+            // List<List<(SlotKey, int)>> branchSlots = new List<List<(SlotKey, int)>>();
+            foreach ((int msgId, AST.Expr cond) in msgs)
+            {
+                int talkListId = talkListConds.Count + 1;
+                talkListConds.Add(new AST.BinaryExpr { Op = "==", Lhs = AST.MakeFunction("f23"), Rhs = AST.MakeVal(talkListId) });
+                if (cond == null)
+                {
+                    state.EntryCommands.Add(AST.MakeCommand(1, 19, talkListId, msgId, -1));
+                }
+                else
+                {
+                    state.EntryCommands.Add(AST.MakeCommand(5, 19, cond, talkListId, msgId, -1));
+                }
+            }
+            talkListConds.Add(AST.Pass);
+
+            // Return to talk list entries and connect everything together
+            // c1_10 ShowShopMessage(1)
+            state.EntryCommands.Add(AST.MakeCommand(1, 10, 1));
+            // assert not (CheckSpecificPersonMenuIsOpen(1, 0) == 1 and not CheckSpecificPersonGenericDialogIsOpen(0)) ->
+            // f59 f58 assert CheckSpecificPersonMenuIsOpen(1, 0) == 0 or CheckSpecificPersonGenericDialogIsOpen(0)
+            AST.Expr waitExpr = new AST.BinaryExpr
+            {
+                Op = "||",
+                Lhs = AST.NegateCond(AST.MakeFunction("f59", 1, 0)),
+                Rhs = AST.MakeFunction("f58", 0),
+            };
+            (long selectStateId, ESD.State selectState) = AST.AllocateState(machine, ref optId);
+            state.Conditions.Add(new ESD.Condition(selectStateId, AST.AssembleExpression(waitExpr)));
+            return AST.AllocateBranch(machine, selectState, talkListConds, ref optId);
+        }
+
+        // Returns trailing states corresponding to each message, then another one for cancelling out of the menu.
+        public static List<ESD.State> OpenOptionMenu(Dictionary<long, ESD.State> machine, ESD.State state, List<int> msgs, ref long optId)
+        {
+            // c1_20 ClearTalkListData()
+            state.EntryCommands.Add(AST.MakeCommand(1, 20));
+            // c1_110 MainMenuFlag()
+            state.EntryCommands.Add(AST.MakeCommand(1, 110));
+            List<AST.Expr> condExprs = new List<AST.Expr>();
+            for (int i = 0; i < msgs.Count; i++)
+            {
+                // c1_19 AddTalkListData(id, msg, -1)
+                state.EntryCommands.Add(AST.MakeCommand(1, 19, i + 1, msgs[i], -1));
+                // f23 GetTalkListEntryResult()
+                condExprs.Add(new AST.BinaryExpr { Op = "==", Lhs = AST.MakeFunction("f23"), Rhs = AST.MakeVal(i + 1) });
+            }
+            condExprs.Add(AST.Pass);
+            // c1_76 OpenConversationChoicesMenu(0)
+            state.EntryCommands.Add(AST.MakeCommand(1, 76, 0));
+            // f59 f58 assert CheckSpecificPersonMenuIsOpen(12, 0) == 0 or CheckSpecificPersonGenericDialogIsOpen(0)
+            AST.Expr waitExpr = new AST.BinaryExpr
+            {
+                Op = "||",
+                Lhs = AST.NegateCond(AST.MakeFunction("f59", 12, 0)),
+                Rhs = AST.MakeFunction("f58", 0),
+            };
+            (long selectStateId, ESD.State selectState) = AST.AllocateState(machine, ref optId);
+            state.Conditions.Add(new ESD.Condition(selectStateId, AST.AssembleExpression(waitExpr)));
+            return AST.AllocateBranch(machine, selectState, condExprs, ref optId);
+        }
+
         // Much more specific utilities than AST
         public static List<long> FindMachinesWithTalkData(ESD esd, int msgId)
         {
@@ -46,6 +132,7 @@ namespace SoulsIds
             public int ConsistentID { get; set; }
             // Optional
             public AST.Expr Condition { get; set; }
+            public AST.Expr HighlightCondition { get; set; }
             // Game-wide metadata
             public int LeaveMsg { get; set; }
         }
@@ -175,9 +262,30 @@ namespace SoulsIds
                 leaveEntry = entryState.EntryCommands.FindLastIndex(c => isTalkEntry(c, -1));
                 leaveEntry = leaveEntry == -1 ? entryState.EntryCommands.Count : leaveEntry + 1;
             }
-            ESD.CommandCall newEntry = data.Condition == null
-                ? AST.MakeCommand(1, 19, talkListId, data.Msg, -1)
-                : AST.MakeCommand(5, 19, data.Condition, talkListId, data.Msg, -1);
+            // c1_149(talkListId, data.Msg, -1, 0, data.HighlightCondition)
+            ESD.CommandCall newEntry;
+            if (data.HighlightCondition == null)
+            {
+                if (data.Condition == null)
+                {
+                    newEntry = AST.MakeCommand(1, 19, talkListId, data.Msg, -1);
+                }
+                else
+                {
+                    newEntry = AST.MakeCommand(5, 19, data.Condition, talkListId, data.Msg, -1);
+                }
+            }
+            else
+            {
+                if (data.Condition == null)
+                {
+                    newEntry = AST.MakeCommand(1, 149, talkListId, data.Msg, -1, 0, data.HighlightCondition);
+                }
+                else
+                {
+                    newEntry = AST.MakeCommand(5, 149, data.Condition, talkListId, data.Msg, -1, 0, data.HighlightCondition);
+                }
+            }
             entryState.EntryCommands.Insert(leaveEntry, newEntry);
 
             long baseId = talkState;

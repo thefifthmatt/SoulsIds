@@ -31,12 +31,16 @@ namespace SoulsIds
             Material,
             Skill,
             // Item types in order
-            Weapon,
-            Protector,
-            Accessory,
-            Goods,
-            Gem,
-            Arts,
+            Weapon, // 0
+            Protector, // 1
+            Accessory, // 2
+            Goods, // 3
+            Gem, // 4 in Elden Ring
+            Arts, // 5 in Elden Ring, but not supported by scripting
+            Booster, // 4 in AC6 shop - 6 here
+            Fcs, // 5 in AC6 shop - 7 here
+            Generator, // 6 in AC6 shop - 5 here
+            // End of items
             Talk,
             Dialogue,
             Entity,
@@ -51,6 +55,11 @@ namespace SoulsIds
             ActionButton,
             ActionButtonText,
             Gesture,
+            // AC6
+            Account,
+            Mission,
+            Arena, // TODO
+            Tutorial,
             // In future
             Cutscene,
             Achievement,
@@ -99,7 +108,7 @@ namespace SoulsIds
             // Helpers
             public static Obj Lot(int id) => new Obj(id, Namespace.Lot);
             public static Obj Shop(int id, int end=-1) => new Obj(id, Namespace.Shop, end);
-            public static Obj EventFlag(int id, int end=-1) => new Obj(id, Namespace.EventFlag, end);
+            public static Obj EventFlag(int id, int end = -1) => new Obj(id, Namespace.EventFlag, end);
             public static Obj EventFlag(uint id, int end = -1) => new Obj(id, Namespace.EventFlag, end);
             public static Obj Talk(int id) => new Obj(id, Namespace.Talk);
             public static Obj Action(int id) => new Obj(id, Namespace.Action);
@@ -120,18 +129,35 @@ namespace SoulsIds
             // For names
             public static Obj Of(Namespace type, object id) => new Obj(id, type);
 
-            public static Obj Item(uint type, int id) {
-                Namespace n;
-                if (type > 10)
+            public static Obj Item(uint type, int id)
+            {
+                if (!LotTypes.TryGetValue(type, out int itemType))
                 {
-                    n = Namespace.Weapon + LotTypes[type];
+                    if (type <= 5)
+                    {
+                        itemType = (int)type;
+                    }
+                    else return UnknownItem(type, id);
                 }
-                else
-                {
-                    n = Namespace.Weapon + (int)type;
-                }
-                return new Obj(id.ToString(), n);
+                return Of(Namespace.Weapon + itemType, id);
             }
+
+            public static Obj AC6Item(int type, int id)
+            {
+                Namespace n;
+                if (type >= 0 && type < 4)
+                {
+                    n = Namespace.Weapon + type;
+                }
+                // idk. It's 4 5 6 in EquipmentLineupParam?
+                else if (type == 6) n = Namespace.Booster;
+                else if (type == 7) n = Namespace.Fcs;
+                else if (type == 5) n = Namespace.Generator;
+                else return UnknownItem(type, id);
+                return Of(n, id);
+            }
+
+            private static Obj UnknownItem(object type, object id) => new Obj($"{type}:{id}", Namespace.Item);
         }
         public enum Verb
         {

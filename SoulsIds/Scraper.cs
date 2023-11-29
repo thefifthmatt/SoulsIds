@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -14,16 +14,22 @@ namespace SoulsIds
     {
         public static readonly Dictionary<string, Namespace> MsgTypes = new Dictionary<string, Namespace>
         {
-            // DS3 and Sekiro
-            { "NPC\u540d", Namespace.NPC },
-            { "\u6b66\u5668\u540d", Namespace.Weapon },
-            { "\u30a2\u30a4\u30c6\u30e0\u540d", Namespace.Goods },
-            { "\u30a4\u30d9\u30f3\u30c8\u30c6\u30ad\u30b9\u30c8", Namespace.Action },
-            { "\u4f1a\u8a71", Namespace.Dialogue },
-            { "\u4f1a\u8a71_dlc1", Namespace.Dialogue },
-            { "\u4f1a\u8a71_dlc2", Namespace.Dialogue },
-            { "\u9632\u5177\u540d", Namespace.Protector },
-            { "\u30a2\u30af\u30bb\u30b5\u30ea\u540d", Namespace.Accessory },
+            // DS3, Sekiro, AC6
+            { "NPC名", Namespace.NPC },
+            { "武器名", Namespace.Weapon },
+            { "アイテム名", Namespace.Goods },
+            { "イベントテキスト", Namespace.Action },
+            { "会話", Namespace.Dialogue },
+            { "会話_dlc1", Namespace.Dialogue },
+            { "会話_dlc2", Namespace.Dialogue },
+            { "防具名", Namespace.Protector },
+            { "アクセサリ名", Namespace.Accessory },
+            // AC6
+            { "ミッション名", Namespace.Mission },
+            { "チュートリアルタイトル", Namespace.Tutorial },
+            { "ブースター名", Namespace.Booster },
+            { "FCS名", Namespace.Fcs },
+            { "ジェネレーター名", Namespace.Generator },
             // DS1
             { "Weapon_name_", Namespace.Weapon },
             { "Armor_name_", Namespace.Protector },
@@ -89,6 +95,7 @@ namespace SoulsIds
             [FromGame.DS3] = "PcGenderFemale1",
             [FromGame.SDT] = "TalkParamId1",
             [FromGame.ER] = "msgId",
+            [FromGame.AC6] = "msgId",
         };
         public bool ScrapeMsgs(Universe u)
         {
@@ -404,6 +411,10 @@ namespace SoulsIds
                 u.Names[Obj.Of(Namespace.NPC, entry.Key)] = entry.Value;
             }
             foreach (KeyValuePair<int, string> entry in editor.LoadNames("ShopQwc", n => int.Parse(n), true))
+            {
+                u.Names[Obj.Of(Namespace.EventFlag, entry.Key)] = entry.Value;
+            }
+            foreach (KeyValuePair<int, string> entry in editor.LoadNames("EventFlag", n => int.Parse(n), true))
             {
                 u.Names[Obj.Of(Namespace.EventFlag, entry.Key)] = entry.Value;
             }
