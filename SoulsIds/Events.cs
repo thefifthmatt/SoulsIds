@@ -290,9 +290,12 @@ namespace SoulsIds
             {
                 ret.Offset = 2;
                 // Non-Elden Ring case
-                if (instr.ID == 6 && instrDoc.Arguments[0].Name == "Event ID")
+                if (instr.ID == 6)
                 {
-                    ret.Offset = 1;
+                    var argName = instrDoc.Arguments[0].Name;
+                    // The raw EMEDFs list the name as "Event ID", but in darkScriptMode that gets
+                    // rewritten to eventId.
+                    if (argName == "Event ID" || argName == "eventId") ret.Offset = 1;
                 }
                 // ret.Callee = (int)args[instr.ID == 0 ? 1 : 0];
                 ret.Callee = (int)args[ret.Offset - 1];
