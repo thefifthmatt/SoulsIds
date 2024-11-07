@@ -69,8 +69,9 @@ namespace SoulsIds
             // naming convention for supporting multiple versions.
             if (param.ParamType == paramdef.ParamType || overrideType == paramdef.ParamType)
             {
-                if (param.ParamdefDataVersion == paramdef.DataVersion
-                    && (param.DetectedSize == -1 || param.DetectedSize == paramdef.GetRowSize()))
+                // Ignored in VersionAware world
+                if (// param.ParamdefDataVersion == paramdef.DataVersion
+                    (param.DetectedSize == -1 || param.DetectedSize == paramdef.GetRowSize()))
                 {
                     param.ApplyParamdef(paramdef);
                     return true;
@@ -86,7 +87,8 @@ namespace SoulsIds
         public static bool ApplyParamdefCarefully(PARAM param, PARAMDEF paramdef, string overrideType = null)
         {
             if ((param.ParamType == paramdef.ParamType || overrideType == paramdef.ParamType)
-                && param.ParamdefDataVersion == paramdef.DataVersion
+                // Ignored in VersionAware world
+                // && param.ParamdefDataVersion == paramdef.DataVersion
                 && (param.DetectedSize == -1 || param.DetectedSize == paramdef.GetRowSize()))
             {
                 param.ApplyParamdef(paramdef);

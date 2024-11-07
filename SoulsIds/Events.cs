@@ -5,8 +5,6 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using SoulsFormats;
 using static SoulsFormats.EMEVD.Instruction;
-using static SoulsIds.Events;
-using Org.BouncyCastle.Bcpg.Sig;
 
 namespace SoulsIds
 {
@@ -279,29 +277,68 @@ namespace SoulsIds
                         InstructionValueSpec spec = null;
                         foreach (EMEDF.ArgDoc arg in instr.Arguments)
                         {
-                            if (arg.MetaType == null) continue;
-                            EMEDF.DarkScriptType metaType = arg.MetaType;
                             EventValueType valueType;
-                            if (metaType.DataType == "entity")
+                            if (arg.MetaType == null)
                             {
-                                if (metaType.Name != null || (metaType.MultiNames != null && arg.Name == metaType.MultiNames.Last()))
+                                // TODO: This doesn't have a type yet
+                                if (arg.Name == "Animation ID")
                                 {
-                                    valueType = EventValueType.Entity;
+                                    valueType = EventValueType.Animation;
                                 }
                                 else
                                 {
                                     continue;
                                 }
                             }
-                            else if (metaType.DataType == "eventflag")
-                            {
-                                valueType = EventValueType.Flag;
-                            }
-                            // Other types: fmg, param, mapint, mapparts, etc.
-                            // Aside from NPC names these don't have EventValueTypes right now
                             else
                             {
-                                continue;
+                                EMEDF.DarkScriptType metaType = arg.MetaType;
+                                if (metaType.DataType == "entity")
+                                {
+                                    if (metaType.Name != null || (metaType.MultiNames != null && arg.Name == metaType.MultiNames.Last()))
+                                    {
+                                        valueType = EventValueType.Entity;
+                                    }
+                                    else
+                                    {
+                                        continue;
+                                    }
+                                }
+                                else if (metaType.DataType == "eventflag")
+                                {
+                                    valueType = EventValueType.Flag;
+                                }
+                                else if (metaType.DataType == "param")
+                                {
+                                    if (metaType.Type == "SpEffectParam")
+                                    {
+                                        valueType = EventValueType.Speffect;
+                                    }
+                                    else
+                                    {
+                                        continue;
+                                    }
+                                }
+                                else if (metaType.DataType == "fmg")
+                                {
+                                    if (metaType.Type == "NpcName")
+                                    {
+                                        valueType = EventValueType.NpcName;
+                                    }
+                                    else
+                                    {
+                                        continue;
+                                    }
+                                }
+                                else if (arg.Name == "Animation ID")
+                                {
+                                    valueType = EventValueType.Animation;
+                                }
+                                // Other types: mapint, mapparts, etc. plus param/fmg cases not covered above
+                                else
+                                {
+                                    continue;
+                                }
                             }
                             if (spec == null)
                             {
@@ -431,11 +468,10 @@ namespace SoulsIds
             {
                 ret.Offset = 2;
                 // Non-Elden Ring case
-                if (instr.ID == 6 && instrDoc.Arguments[0].Name == "Event ID")
+                if (instr.ID == 6 && (instrDoc.Arguments[0].Name == "Event ID" || instrDoc.Arguments[0].Name == "eventId"))
                 {
                     ret.Offset = 1;
                 }
-                // ret.Callee = (int)args[instr.ID == 0 ? 1 : 0];
                 ret.Callee = (int)args[ret.Offset - 1];
             }
             if (paramAwareMode && pre != null)
@@ -850,13 +886,18 @@ namespace SoulsIds
 
         public class EventValue
         {
+            // ID is currently int or uint, depending on the type of entity. They should be interchangeable, however.
             public EventValue(EventValueType Type, object ID)
             {
                 this.Type = Type;
                 this.ID = ID;
             }
             public EventValueType Type { get; set; }
-            public object ID { get; set; }
+            private object ID { get; set; }
+
+            public bool IsArg() => ID is string s && s.StartsWith("X");
+
+            public string StrID => ID.ToString();
 
             public int IntID
             {
@@ -878,19 +919,65 @@ namespace SoulsIds
                 }
             }
 
+            public bool TryIntID(out int ret)
+            {
+                if (ID is int id)
+                {
+                    ret = id;
+                    return true;
+                }
+                else if (ID is uint uid)
+                {
+                    ret = (int)uid;
+                    return true;
+                }
+                else
+                {
+                    ret = 0;
+                    return false;
+                }
+            }
+
+            public bool TryUIntID(out uint ret)
+            {
+                if (ID is int id)
+                {
+                    ret = (uint)id;
+                    return true;
+                }
+                else if (ID is uint uid)
+                {
+                    ret = uid;
+                    return true;
+                }
+                else
+                {
+                    ret = 0;
+                    return false;
+                }
+            }
+
             // Convenience functions for event-editing, which are currently mostly int-based
             public static EventValue Enemy(int id) => new EventValue(EventValueType.Enemy, id);
+            public static EventValue Enemy(uint id) => new EventValue(EventValueType.Enemy, id);
             public static EventValue Asset(int id) => new EventValue(EventValueType.Asset, id);
+            public static EventValue Asset(uint id) => new EventValue(EventValueType.Asset, id);
             public static EventValue Object(int id) => new EventValue(EventValueType.Object, id);
+            public static EventValue Object(uint id) => new EventValue(EventValueType.Object, id);
             public static EventValue Flag(int id) => new EventValue(EventValueType.Flag, id);
+            public static EventValue Flag(uint id) => new EventValue(EventValueType.Flag, id);
             public static EventValue Region(int id) => new EventValue(EventValueType.Region, id);
+            public static EventValue Region(uint id) => new EventValue(EventValueType.Region, id);
             public static EventValue Generator(int id) => new EventValue(EventValueType.Generator, id);
+            public static EventValue Generator(uint id) => new EventValue(EventValueType.Generator, id);
             public static EventValue Animation(int id) => new EventValue(EventValueType.Animation, id);
             public static EventValue NpcName(int id) => new EventValue(EventValueType.NpcName, id);
             // public static EventValue Unknown(int id) => new EventValue(EventValueType.Unknown, id);
 
             public override bool Equals(object obj) => obj is EventValue o && Equals(o);
-            public bool Equals(EventValue o) => Type == o.Type && ID.Equals(o.ID);
+            // == for object is always reference-based, Equals is different for int and uint, so convert them
+            public bool Equals(EventValue o) => Type == o.Type && (TryUIntID(out uint a) && o.TryUIntID(out uint b) && a == b || ID.Equals(o.ID));
+            // HashCode for int and uint are the same
             public override int GetHashCode() => Type.GetHashCode() ^ ID.GetHashCode();
             public override string ToString() => $"{Type.ToString().ToLowerInvariant()} {ID}";
         }
@@ -1034,15 +1121,14 @@ namespace SoulsIds
             HashSet<int> needsRewrite = null;
             foreach (((string cmd, string args), List<InstrEdit> edits) in e.NameArgEdits)
             {
-                // if (origin == 16002695) Console.WriteLine(">>" + cmd + args);
                 // Condition group commands have banks [0, 1000)
                 if (!docByName.TryGetValue(cmd, out (int, int) docId)) throw new Exception($"Internal error: unrecognized command in edit {cmd}({args})");
                 if (docId.Item1 >= 1000 && !ConditionGroupUsage.ContainsKey(docId)) continue;
-                if (needsRewrite == null) needsRewrite = new HashSet<int>();
                 EMEDF.InstrDoc instrDoc = doc[docId.Item1][docId.Item2];
                 // Non-interesting commands need to be rewritten, but ignore them for now.
                 if (ConditionGroupUsage.TryGetValue(docId, out int pos))
                 {
+                    needsRewrite ??= new HashSet<int>();
                     needsRewrite.Add(parseCond(args.Split(',')[pos]));
                 }
                 if (docId.Item1 >= 1000 || ConditionGroupUsage.ContainsKey(docId)) continue;
@@ -1052,10 +1138,7 @@ namespace SoulsIds
                 // MAIN is fine
                 if (cond == 0) continue;
                 // if (e.AutoConds != null && e.AutoConds.Contains(cond)) continue;
-                if (definitions == null)
-                {
-                    definitions = new Dictionary<(string, string), List<int>>();
-                }
+                definitions ??= new Dictionary<(string, string), List<int>>();
                 (string, string) defKey = (cmd, condParts[1]);
                 if (definitions.TryGetValue(defKey, out List<int> existConds))
                 {
@@ -1078,12 +1161,12 @@ namespace SoulsIds
                     if (!docByName.TryGetValue(cmd, out (int, int) docId)) throw new Exception($"Internal error: unrecognized command in edit {cmd}({args})");
                     if (docId.Item1 < 1000 && int.TryParse(args[0], out int defCond) && defCond != 0)
                     {
-                        if (needsRewrite == null) needsRewrite = new HashSet<int>();
+                        needsRewrite ??= new HashSet<int>();
                         needsRewrite.Add(parseCond(args[0]));
                     }
                     if (ConditionGroupUsage.TryGetValue(docId, out int pos))
                     {
-                        if (needsRewrite == null) needsRewrite = new HashSet<int>();
+                        needsRewrite ??= new HashSet<int>();
                         needsRewrite.Add(parseCond(args[pos]));
                     }
                 }
@@ -1094,6 +1177,11 @@ namespace SoulsIds
                 if (definitions != null)
                 {
                     needsRewrite.ExceptWith(definitions.Values.SelectMany(e => e));
+                }
+                if (condOrder != null)
+                {
+                    // Not present in event, added with Add, and assumed to be in a safe range
+                    needsRewrite.ExceptWith(condOrder.Split(' ').Where(c => c.StartsWith("+")).Select(c => int.Parse(c.Substring(1))));
                 }
                 if (needsRewrite.Count > 0)
                 {
@@ -1115,6 +1203,7 @@ namespace SoulsIds
                                 Console.WriteLine($"    - {instr}");
                             }
                         }
+                        Console.WriteLine();
                     }
                     else
                     {
@@ -1179,11 +1268,12 @@ namespace SoulsIds
             string desc() => string.Join("; ", candidates.Select(e => $"[{string.Join(",", e.Value)}]->{e.Key}"));
             if (expectVanilla)
             {
-                if (candidates.Any(e => !e.Value.Contains(e.Key)))
+                List<int> mismatch = candidates.Where(e => !e.Value.Contains(e.Key)).Select(e => e.Key).ToList();
+                if (mismatch.Any())
                 {
                     // If it's missing, add a usage to CondIdentity to indicate that both are options for the condition group
-                    Console.WriteLine($"Non-matching vanilla condition groups in {origin}->{ev.ID}: config->actual mapping {desc()}");
-                    return null;
+                    Console.WriteLine($"Non-matching vanilla condition groups in {origin}->{ev.ID} for {string.Join(",", mismatch)}: config->actual mapping {desc()}");
+                    // return null;
                 }
             }
             // If vanilla configuration is possible, permit that
@@ -1225,7 +1315,7 @@ namespace SoulsIds
                 List<int> configConds = reduced.SelectMany(e => e.Value).Distinct().ToList();
                 if (actualConds.Count == configConds.Count && condOrder != null)
                 {
-                    List<int> order = condOrder.Split(' ').Where(c => !c.StartsWith("<")).Select(int.Parse).ToList();
+                    List<int> order = condOrder.Split(' ').Select(c => int.TryParse(c, out int i) ? i : 0).Where(i => i != 0).ToList();
                     if (configConds.All(c => order.Contains(c)))
                     {
                         foreach (bool positive in new[] { true, false })
@@ -1652,8 +1742,12 @@ namespace SoulsIds
                 instr.Save(pre);
                 ev.Instructions[j] = instr.Val;
             }
-            ApplyAdds(edits, ev);
+            ApplyAdds(edits, ev, pre);
             pre.Postprocess();
+            if (edits.PendingEdits.Count != 0)
+            {
+                throw new Exception($"{ev.ID} has unapplied edits: {string.Join("; ", edits.PendingEdits)}");
+            }
         }
 
         public void ApplyAdds(EventEdits edits, EMEVD.Event e, OldParams oldParams = null)
@@ -1762,6 +1856,8 @@ namespace SoulsIds
             };
             AddEdit(edits, cmd, checkEdit);
         }
+
+        public void AddMacro(EventEdits edits, EventAddCommand add) => AddMacro(edits, new List<EventAddCommand> { add });
 
         public void AddMacro(EventEdits edits, List<EventAddCommand> adds)
         {
@@ -1910,7 +2006,7 @@ namespace SoulsIds
         {
             // Assuming the args are compatible. Use string comparison for this, but it's intended for int types
             string argStr = arg.ToString();
-            return changes.Where(e => e.Key.ID.ToString() == argStr).Select(e => e.Value);
+            return changes.Where(e => e.Key.StrID == argStr).Select(e => e.Value);
         }
 
         public void RewriteInitInts(
@@ -1981,7 +2077,7 @@ namespace SoulsIds
                 {
                     if (IsArgCompatible(addDoc, i, value.Type))
                     {
-                        addArgs[i] = value.ID.ToString();
+                        addArgs[i] = value.StrID;
                         break;
                     }
                 }
@@ -2016,13 +2112,28 @@ namespace SoulsIds
         }
 
         private static readonly Regex CommentRe = new Regex(@"//.*");
-        public List<string> Decomment(List<string> cmds)
+        // Non-static variant probably shouldn't be used
+        public List<string> Decomment(List<string> cmds) => DecommentCmds(cmds);
+        public static string DecommentCmd(string cmd)
+        {
+            if (cmd == null) return null;
+            cmd = CommentRe.Replace(cmd, "").Trim();
+            return string.IsNullOrWhiteSpace(cmd) ? null : cmd;
+        }
+        public static List<string> DecommentCmds(List<string> cmds)
         {
             if (cmds == null) return null;
             return cmds
-                .Select(c => CommentRe.Replace(c, "").Trim())
-                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .Select(DecommentCmd)
+                .Where(c => c != null)
                 .ToList();
+        }
+
+        public static string DehighlightCmd(string cmd)
+        {
+            if (cmd == null) return null;
+            cmd = cmd.Replace("+ ", "").Replace("*", "").Trim();
+            return string.IsNullOrWhiteSpace(cmd) ? null : cmd;
         }
 
         public bool TryGetInstructionID(string cmd, out (int, int) id)
@@ -2397,6 +2508,8 @@ namespace SoulsIds
                                 }
                             }
                         }
+                        // Check this while generating events
+                        if (instr.Doc == null) throw new Exception($"Missing docs for {instr}");
                         // Basic display stuff
                         I info = new I
                         {
@@ -2469,7 +2582,8 @@ namespace SoulsIds
                             calleeInfo.Highlight = true;
                             calleeInfo.HighlightInstr = true;
                         }
-                        if (initVals.Count > 0 || calleeInfo.Highlight)
+                        // Always include caller I guess, as otherwise these appear to be uninitialized
+                        // if (initVals.Count > 0 || calleeInfo.Highlight)
                         {
                             // Add the metadata, but don't highlight it unless any of them are highlightable
                             string renderCallArg(object arg, int pos)

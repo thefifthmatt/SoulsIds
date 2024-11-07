@@ -26,6 +26,11 @@ namespace SoulsIds
                 throw new Exception($"{this} cannot be used as an int");
             }
 
+            public bool IsInt(int check)
+            {
+                return TryAsInt(out int val) && val == check;
+            }
+
             public virtual bool TryAsInt(out int i)
             {
                 i = 0;
@@ -334,9 +339,9 @@ namespace SoulsIds
                 }
                 else if (OperatorsByByte.ContainsKey(b))
                 {
-                    if (OperatorsByByte[b] == "N")
+                    if (UnaryOperators.Contains(b))
                     {
-                        exprs.Push(new UnaryExpr { Op = "N", Arg = exprs.Pop() });
+                        exprs.Push(new UnaryExpr { Op = OperatorsByByte[b], Arg = exprs.Pop() });
                     }
                     else
                     {
@@ -531,8 +536,10 @@ namespace SoulsIds
             [0x96] = "!=",
             [0x98] = "&&",
             [0x99] = "||",
+            [0x9A] = "!",
         };
         public static Dictionary<string, byte> BytesByOperator = OperatorsByByte.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
+        public static byte[] UnaryOperators = new byte[] { 0x8D, 0x9A };
         public static Dictionary<byte, string> TerminatorsByByte = new Dictionary<byte, string>
         {
             [0xA6] = "~",
@@ -554,6 +561,12 @@ namespace SoulsIds
         public static string FormatMachine(long id) => FormatMachine((int)id);
 
         public static int MachineForIndex(int diffpart) => 0x7FFFFFFF - diffpart;
+
+        public static int ParseMachine(string mIdStr)
+        {
+            if (!ParseMachine(mIdStr, out int id)) throw new Exception($"Internal error: invalid machine id {id}");
+            return id;
+        }
 
         public static bool ParseMachine(string mIdStr, out int mId)
         {
@@ -586,12 +599,15 @@ namespace SoulsIds
             };
         }
 
+        // Could also do fancy int casting here to support enums
+        private static Expr MakeExpr(object a) => a is Expr e ? e : MakeVal(a);
+
         public static Expr MakeFunction(string name, params object[] args)
         {
             return new FunctionCall
             {
                 Name = name,
-                Args = args.Select(a => a is Expr e ? e : MakeVal(a)).ToList(),
+                Args = args.Select(MakeExpr).ToList(),
             };
         }
 
@@ -600,13 +616,14 @@ namespace SoulsIds
             ESD.CommandCall call = new ESD.CommandCall(bank, id);
             foreach (object a in args)
             {
-                call.Arguments.Add(AssembleExpression(a is Expr e ? e : MakeVal(a)));
+                call.Arguments.Add(AssembleExpression(MakeExpr(a)));
             }
             return call;
         }
 
         public static readonly Expr Pass = MakeVal(1);
         public static Expr NegateCond(Expr expr) => new BinaryExpr { Op = "==", Lhs = expr, Rhs = MakeVal(0) };
+        public static Expr Binop(object lhs, string op, object rhs) => new BinaryExpr { Op = op, Lhs = MakeExpr(lhs), Rhs = MakeExpr(rhs) };
 
         public static Expr ChainExprs(string op, IEnumerable<Expr> parts)
         {
@@ -654,6 +671,12 @@ namespace SoulsIds
             return alts;
         }
 
+        public static (ESD.State, ESD.State) SimpleBranch(Dictionary<long, ESD.State> states, ESD.State main, Expr cond, ref long baseId)
+        {
+            List<ESD.State> branches = AllocateBranch(states, main, new List<Expr> { cond, Pass }, ref baseId);
+            return (branches[0], branches[1]);
+        }
+
         public static void CallMachine(ESD.State state, long nextState, int machineIndex, params object[] args)
         {
             ESD.CommandCall call = MakeCommand(6, MachineForIndex(machineIndex), args);
@@ -676,6 +699,18 @@ namespace SoulsIds
             ESD.CommandCall call = MakeCommand(7, -1, val);
             cond.PassCommands.Add(call);
             state.Conditions.Add(cond);
+        }
+
+        public static long GetFollowState(Dictionary<long, ESD.State> states, ESD.State state)
+        {
+            if (state.Conditions.Count != 1
+                || !DisassembleExpression(state.Conditions[0].Evaluator).IsInt(1)
+                || state.Conditions[0].TargetState is not long toState
+                || !states.ContainsKey(toState))
+            {
+                throw new Exception("Grace state machine has unexpected structure, can't edit it");
+            }
+            return toState;
         }
     }
 }

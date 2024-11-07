@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -165,8 +166,14 @@ namespace SoulsIds
         public Dictionary<string, T> Load<T>(string relDir, Func<string, T> reader, string ext = "*.dcx")
         {
             if (Spec.GameDir == null) throw new Exception("Base game dir not provided");
-            Dictionary<string, T> ret = new Dictionary<string, T>();
-            foreach (string path in Directory.GetFiles($@"{Spec.GameDir}\{relDir}", ext))
+            return LoadRel($@"{Spec.GameDir}\{relDir}", reader, ext);
+        }
+
+        // Loads multiple files from dir, relative to the current directory
+        public Dictionary<string, T> LoadRel<T>(string dir, Func<string, T> reader, string ext = "*.dcx")
+        {
+            Dictionary<string, T> ret = new();
+            foreach (string path in Directory.GetFiles(dir, ext))
             {
                 string name = BaseName(path);
                 try
@@ -179,6 +186,27 @@ namespace SoulsIds
                 }
             }
             return ret;
+        }
+
+        public Dictionary<string, T> LoadParallel<T>(string relDir, Func<string, T> reader, string ext = "*.dcx")
+        {
+            if (Spec.GameDir == null) throw new Exception("Base game dir not provided");
+            ConcurrentDictionary<string, T> ret = new();
+            string[] paths = Directory.GetFiles($@"{Spec.GameDir}\{relDir}", ext);
+            Parallel.For(0, paths.Length, i =>
+            {
+                string path = paths[i];
+                string name = BaseName(path);
+                try
+                {
+                    ret[name] = reader(path);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Failed to load {path}: {ex}");
+                }
+            });
+            return ret.ToDictionary(e => e.Key, e => e.Value);
         }
 
         // Loads a bnd file from file path, relative to the current dir
@@ -218,8 +246,14 @@ namespace SoulsIds
         public Dictionary<string, Dictionary<string, T>> LoadBnds<T>(string relDir, Func<byte[], string, T> parser, string ext = "*bnd.dcx", string fileExt = null)
         {
             if (Spec.GameDir == null) throw new Exception("Base game dir not provided");
+            return LoadBndsRel($@"{Spec.GameDir}\{relDir}", parser, ext, fileExt);
+        }
+
+        // Loads multiple bnd files from file path, relative to current directory
+        public Dictionary<string, Dictionary<string, T>> LoadBndsRel<T>(string dir, Func<byte[], string, T> parser, string ext = "*bnd.dcx", string fileExt = null)
+        {
             Dictionary<string, Dictionary<string, T>> ret = new Dictionary<string, Dictionary<string, T>>();
-            foreach (string path in Directory.GetFiles($@"{Spec.GameDir}\{relDir}", ext))
+            foreach (string path in Directory.GetFiles(dir, ext))
             {
                 string name = BaseName(path);
                 Dictionary<string, T> bnds = LoadBnd(path, parser, fileExt);
@@ -357,6 +391,12 @@ namespace SoulsIds
                 if (!diffBnds.ContainsKey(name)) continue;
                 OverrideBnd(path, toDir, diffBnds[name], writer, fileExt);
             }
+        }
+
+        public FMGDictionary LoadFmgBnd(string path)
+        {
+            Dictionary<string, byte[]> fmgBytes = LoadBnd(path, (data, _) => data);
+            return new FMGDictionary { Inner = fmgBytes };
         }
 
         // Return a path name without, for easy access within code.

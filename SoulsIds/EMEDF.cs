@@ -33,6 +33,12 @@ namespace SoulsIds
             return ReadText(input);
         }
 
+        public void WriteFile(string path)
+        {
+            string output = JsonConvert.SerializeObject(this, Formatting.Indented).Replace("\r\n", "\n");
+            File.WriteAllText(path, output);
+        }
+
         public class ClassDoc
         {
             [JsonProperty(PropertyName = "name")]
@@ -88,16 +94,16 @@ namespace SoulsIds
             public string FormatString { get; set; }
 
             [JsonProperty(PropertyName = "unk1")]
-            private long UNK1 { get; set; }
+            public long UNK1 { get; set; }
 
             [JsonProperty(PropertyName = "unk2")]
-            private long UNK2 { get; set; }
+            public long UNK2 { get; set; }
 
             [JsonProperty(PropertyName = "unk3")]
-            private long UNK3 { get; set; }
+            public long UNK3 { get; set; }
 
             [JsonProperty(PropertyName = "unk4")]
-            private long UNK4 { get; set; }
+            public long UNK4 { get; set; }
 
             // Calculated values
 
@@ -126,9 +132,10 @@ namespace SoulsIds
             public Dictionary<string, string> Values { get; set; }
 
             // Calculated values
-
+            [JsonIgnore]
             public string DisplayName { get; set; }
 
+            [JsonIgnore]
             public Dictionary<string, string> DisplayValues { get; set; }
 
             public object GetDisplayValue(object val) => DisplayValues.TryGetValue(val.ToString(), out string reval) ? reval : val;

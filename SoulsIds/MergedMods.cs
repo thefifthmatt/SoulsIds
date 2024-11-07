@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.IO;
+
 using Tommy;
 
 namespace SoulsIds
@@ -8,6 +10,7 @@ namespace SoulsIds
     public class MergedMods
     {
         private List<string> dirs;
+        private List<string> externalDlls;
 
         // These directories should be validated beforehand, and ideally fully specified
         public MergedMods(string dir = null)
@@ -18,11 +21,15 @@ namespace SoulsIds
             }
         }
 
-        public MergedMods(List<string> dirs)
+        public MergedMods(List<string> dirs, List<string> externalDlls)
         {
             if (dirs != null && dirs.Count > 0)
             {
                 this.dirs = dirs;
+            }
+            if (externalDlls != null && externalDlls.Count > 0)
+            {
+                this.externalDlls = externalDlls;
             }
         }
 
@@ -48,6 +55,9 @@ namespace SoulsIds
         public IEnumerable<string> Dirs => dirs ?? new List<string>();
         public int Count => dirs == null ? 0 : dirs.Count;
 
+        // These won't be merged, but they can be added to custom launcher
+        public IEnumerable<string> ExternalDlls => externalDlls ?? new List<string>();
+
         public static MergedMods FromPath(string path)
         {
             if (string.IsNullOrWhiteSpace(path))
@@ -71,6 +81,42 @@ namespace SoulsIds
             {
                 // Don't fail here, wait until the main randomizer loop
                 return new MergedMods(path);
+            }
+        }
+
+        public static void AddExternalDlls(string inPath, string outPath, List<string> extraDlls)
+        {
+            TomlTable table;
+            using (StreamReader reader = File.OpenText(inPath))
+            {
+                // May fail parse
+                table = TOML.Parse(reader);
+            }
+            string tomlDir = new FileInfo(inPath).DirectoryName;
+            TomlNode tomlList = table["modengine"]["external_dlls"];
+            // These must be fully qualified paths
+            List<string> dlls = new(extraDlls);
+            if (tomlList.IsArray)
+            {
+                foreach (TomlNode node in tomlList)
+                {
+                    if (node is TomlString path)
+                    {
+                        dlls.Add(GetFullFileName(tomlDir, path.Value));
+                    }
+                }
+            }
+            TomlArray newDlls = new TomlArray();
+            newDlls.AddRange(dlls.Distinct().Select(s => new TomlString { Value = s }));
+            table["modengine"]["external_dlls"] = newDlls;
+            // The library can't roundtrip, fucks up multiple top-level sections
+            using (StreamWriter writer = File.CreateText(outPath))
+            {
+                foreach ((string key, TomlNode node) in table.RawTable)
+                {
+                    // Lol
+                    writer.WriteLine($"{key} = {node.ToInlineToml()}");
+                }
             }
         }
 
@@ -108,7 +154,15 @@ namespace SoulsIds
                     dirs.Add(dir);
                 }
             }
-            return new MergedMods(dirs);
+            List<string> dlls = new List<string>();
+            foreach (TomlNode node in table["modengine"]["external_dlls"])
+            {
+                if (node is TomlString path)
+                {
+                    dlls.Add(GetFullFileName(tomlDir, path.Value));
+                }
+            }
+            return new MergedMods(dirs, dlls);
         }
 
         private static string GetFullDirectoryName(string dir, string path)
@@ -121,6 +175,38 @@ namespace SoulsIds
             catch (Exception)
             {
                 return path;
+            }
+        }
+
+        private static string GetFullFileName(string dir, string path)
+        {
+            try
+            {
+                FileInfo info = new FileInfo(Path.Combine(dir, path));
+                return info.FullName;
+            }
+            catch (Exception)
+            {
+                return path;
+            }
+        }
+
+        private static void PrintTable(TomlNode node, string indent = "", string parent = "")
+        {
+            Console.WriteLine($"{indent}{parent}{node}");
+            if (node is TomlTable subtable)
+            {
+                foreach ((string key, TomlNode child) in subtable.RawTable)
+                {
+                    PrintTable(child, indent + "- ", $"{key}: ");
+                }
+            }
+            else
+            {
+                foreach (TomlNode child in node)
+                {
+                    PrintTable(child, indent + "- ");
+                }
             }
         }
     }

@@ -25,6 +25,7 @@ namespace SoulsIds
             Event,
             EventFlag,
             ESD,
+            Machine,
             Lot,
             Shop,
             NPC,
@@ -35,8 +36,8 @@ namespace SoulsIds
             Protector, // 1
             Accessory, // 2
             Goods, // 3
-            Gem, // 4 in Elden Ring
-            Arts, // 5 in Elden Ring, but not supported by scripting
+            Gem, // 4 in Elden Ring, but not supported by scripting
+            Arts, // 5 in Elden Ring, but not supported by scripting (TODO: redundant with Gem?)
             Booster, // 4 in AC6 shop - 6 here
             Fcs, // 5 in AC6 shop - 7 here
             Generator, // 6 in AC6 shop - 5 here
@@ -55,10 +56,11 @@ namespace SoulsIds
             ActionButton,
             ActionButtonText,
             Gesture,
+            TextEffect,
             // AC6
             Account,
             Mission,
-            Arena, // TODO
+            Arena,
             Tutorial,
             // In future
             Cutscene,
@@ -67,7 +69,12 @@ namespace SoulsIds
             SpEffect,
             SFX,
         }
-        private static HashSet<Namespace> Quotes = new HashSet<Namespace> { Namespace.Action, Namespace.Dialogue, Namespace.Talk, Namespace.ActionButton };
+
+        private static readonly HashSet<Namespace> Quotes = new()
+        {
+            Namespace.Action, Namespace.Dialogue, Namespace.Talk, Namespace.ActionButton, Namespace.ActionButtonText, Namespace.TextEffect,
+        };
+
         public class Obj : IComparable<Obj>
         {
             public string ID { get; set; }
@@ -125,6 +132,7 @@ namespace SoulsIds
             public static Obj Dialogue(int id) => new Obj(id, Namespace.Dialogue);
             public static Obj Bonfire(int id) => new Obj(id, Namespace.Bonfire);
             public static Obj Human(int id) => new Obj(id, Namespace.Human);
+            public static Obj TextEffect(int id) => new Obj(id, Namespace.TextEffect);
 
             // For names
             public static Obj Of(Namespace type, object id) => new Obj(id, type);

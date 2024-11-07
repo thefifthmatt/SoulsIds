@@ -27,7 +27,7 @@ namespace SoulsIds
 
         public GameSpec Clone() => (GameSpec)MemberwiseClone();
 
-        public enum FromGame { UNKNOWN, DS1, DS1R, DS2, DS2S, BB, DS3, SDT, ER, AC6 }
+        public enum FromGame { UNKNOWN, DES, DS1, DS1R, DS2, DS2S, BB, DS3, SDT, ER, AC6 }
         public static GameSpec ForGame(FromGame game)
         {
             GameSpec spec = Games.TryGetValue(game, out GameSpec baseSpec) ? baseSpec.Clone() : new GameSpec();
@@ -38,6 +38,15 @@ namespace SoulsIds
         private static readonly Dictionary<FromGame, GameSpec> Games = new Dictionary<FromGame, GameSpec>
         {
             [FromGame.UNKNOWN] = new GameSpec(),
+            [FromGame.DES] = new GameSpec
+            {
+                Dcx = (DCX.Type)DCX.DefaultType.DemonsSouls,
+                EsdDir = @"script\talk",
+                MsgDir = @"msg\na_english",  // English as default
+                MsbDir = @"map\mapstudio",
+                ParamFile = @"param\gameparam\gameparam.parambnd.dcx",
+                DefDir = @"dist\DES\Defs",
+            },
             [FromGame.DS1] = new GameSpec
             {
                 Dcx = DCX.Type.None,
@@ -47,7 +56,7 @@ namespace SoulsIds
                 MsbDir = @"map\MapStudio",
                 ParamFile = @"param\GameParam\GameParam.parambnd",
                 NameDir = @"dist\DS1R\Names",
-                LayoutDir = @"dist\DS1\Layouts",
+                LayoutDir = @"dist\DS1R\Layouts",
             },
             [FromGame.DS1R] = new GameSpec
             {
@@ -67,7 +76,7 @@ namespace SoulsIds
                 EsdDir = @"ezstate",
                 MsgDir = @"menu\text\english",  // Also in talk subdir
                 MsbDir = @"map",                // One msb per subdir
-                ParamFile = "gameparam_dlc2.parambnd.dcx",
+                ParamFile = "enc_regulation.bnd.dcx",
                 NameDir = @"dist\DS2S\Names",
                 LayoutDir = @"dist\DS2S\Layouts",  // The same?
             },
@@ -78,13 +87,15 @@ namespace SoulsIds
                 EsdDir = @"ezstate",
                 MsgDir = @"menu\text\english",  // Also in talk subdir
                 MsbDir = @"map",                // One msb per subdir
-                ParamFile = "gameparam_dlc2.parambnd.dcx",
+                ParamFile = "enc_regulation.bnd.dcx",
                 NameDir = @"dist\DS2S\Names",
                 LayoutDir = @"dist\DS2S\Layouts",
             },
             [FromGame.BB] = new GameSpec
             {
                 Dcx = (DCX.Type)DCX.DefaultType.DarkSouls3,
+                EsdDir = @"script\talk",
+                MsgDir = @"msg\engus",
             },
             [FromGame.DS3] = new GameSpec
             {
