@@ -285,6 +285,10 @@ namespace SoulsIds
                 {
                     return SFUtil.DecryptAC6Regulation(path);
                 }
+                else if (Spec.Game == FromGame.NR && detectPath.EndsWith(".bin"))
+                {
+                    return SFUtil.DecryptNRRegulation(path);
+                }
                 byte[] data = File.ReadAllBytes(path);
                 if (DCX.Is(data))
                 {
