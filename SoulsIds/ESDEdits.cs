@@ -2,9 +2,6 @@
 using System.Linq;
 using System.Collections.Generic;
 using SoulsFormats;
-using System.Globalization;
-using Org.BouncyCastle.Ocsp;
-using static SoulsFormats.MSB.Shape;
 
 namespace SoulsIds
 {
@@ -196,6 +193,21 @@ namespace SoulsIds
                 {
                     ESD.State state = stateEntry.Value;
                     state.Conditions.ForEach(checkCond);
+                }
+            }
+        }
+
+        // Excludes pass commands
+        public static void ForEachCommand(ESD esd, Action<ESD.CommandCall> predicate)
+        {
+            foreach (KeyValuePair<long, Dictionary<long, ESD.State>> machineEntry in esd.StateGroups)
+            {
+                foreach (KeyValuePair<long, ESD.State> stateEntry in machineEntry.Value)
+                {
+                    ESD.State state = stateEntry.Value;
+                    state.EntryCommands.ForEach(predicate);
+                    state.WhileCommands.ForEach(predicate);
+                    state.ExitCommands.ForEach(predicate);
                 }
             }
         }

@@ -36,11 +36,14 @@ namespace SoulsIds
             Protector, // 1
             Accessory, // 2
             Goods, // 3
-            Gem, // 4 in Elden Ring, but not supported by scripting
-            Arts, // 5 in Elden Ring, but not supported by scripting (TODO: redundant with Gem?)
-            Booster, // 4 in AC6 shop - 6 here
-            Fcs, // 5 in AC6 shop - 7 here
-            Generator, // 6 in AC6 shop - 5 here
+            Gem, // 4 in ER shop and 5 in lot, but not supported by scripting
+            Arts, // TODO remove, redundant to gem
+            CustomWeapon, // 6 in NR and ER lot
+            Antique, // 7 in NR lot
+            Booster, // 4 in AC6 shop
+            Fcs, // 5 in AC6 shop
+            Generator, // 6 in AC6 shop
+            ItemTable, // 5 in NR shop
             // End of items
             Talk,
             Dialogue,
@@ -137,11 +140,14 @@ namespace SoulsIds
             // For names
             public static Obj Of(Namespace type, object id) => new Obj(id, type);
 
+            // Type can be a lot type in bit representation, or a shop item type.
+            // For lot types in Elden Ring and later, manually map the type instead
             public static Obj Item(uint type, int id)
             {
                 if (!LotTypes.TryGetValue(type, out int itemType))
                 {
-                    if (type <= 5)
+                    // Up to gem in script/shop mapping
+                    if (type <= 4)
                     {
                         itemType = (int)type;
                     }

@@ -27,7 +27,7 @@ namespace SoulsIds
 
         public GameSpec Clone() => (GameSpec)MemberwiseClone();
 
-        public enum FromGame { UNKNOWN, DES, DS1, DS1R, DS2, DS2S, BB, DS3, SDT, ER, AC6 }
+        public enum FromGame { UNKNOWN, DES, DS1, DS1R, DS2, DS2S, BB, DS3, SDT, ER, AC6, NR }
         public static GameSpec ForGame(FromGame game)
         {
             GameSpec spec = Games.TryGetValue(game, out GameSpec baseSpec) ? baseSpec.Clone() : new GameSpec();
@@ -141,6 +141,18 @@ namespace SoulsIds
                 ParamFile = "regulation.bin",
                 NameDir = @"dist\AC6\Names",
                 DefDir = @"dist\AC6\Defs",
+            },
+            [FromGame.NR] = new GameSpec
+            {
+                // TODO: Update
+                Dcx = (DCX.Type)DCX.DefaultType.EldenRing,
+                GameDir = @"C:\Program Files (x86)\Steam\steamapps\common\ELDEN RING NIGHTREIGN\Game",
+                EsdDir = @"script\talk",
+                MsgDir = @"msg\engus",
+                MsbDir = @"map\mapstudio",
+                ParamFile = "regulation.bin",
+                NameDir = @"dist\NR\Names",
+                DefDir = @"dist\NR\Defs",
             },
         };
     }

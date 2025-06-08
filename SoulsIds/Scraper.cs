@@ -54,6 +54,8 @@ namespace SoulsIds
             { "EventTextForTalk", Namespace.Action },
             { "ActionButtonText", Namespace.ActionButtonText },
             { "TalkMsg", Namespace.Dialogue },
+            // NR
+            { "AntiqueName", Namespace.Antique },
         };
         public static readonly Dictionary<Namespace, string> ItemParams = new Dictionary<Namespace, string>
         {
@@ -115,6 +117,7 @@ namespace SoulsIds
             [FromGame.SDT] = "TalkParamId1",
             [FromGame.ER] = "msgId",
             [FromGame.AC6] = "msgId",
+            [FromGame.NR] = "msgId",
         };
 
         public bool ScrapeMsgs(Universe u)
@@ -190,7 +193,7 @@ namespace SoulsIds
                 }
             }
             // Additional param-based messages for specific games
-            if (spec.Game == FromGame.ER)
+            if (spec.Game == FromGame.ER || spec.Game == FromGame.NR)
             {
                 foreach (PARAM.Row row in Params["ActionButtonParam"].Rows)
                 {
@@ -308,8 +311,57 @@ namespace SoulsIds
                 }
                 // NPC param file is invalid for DS1R? lot should be itemLotId_1 though
             }
-            else if (spec.Game == FromGame.ER && Params.ContainsKey("ItemLotParam_map"))
+            else if ((spec.Game == FromGame.ER || spec.Game == FromGame.NR) && Params.ContainsKey("ItemLotParam_map"))
             {
+                Dictionary<int, Namespace> lotMapping;
+                Dictionary<int, Namespace> shopMapping;
+                if (spec.Game == FromGame.ER)
+                {
+                    lotMapping = new Dictionary<int, Namespace>
+                    {
+                        // The enum order is WEAPON PROTECTOR ACCESSORY GOODS (GEM ART)
+                        [1] = Namespace.Goods,
+                        [2] = Namespace.Weapon,
+                        [3] = Namespace.Protector,
+                        [4] = Namespace.Accessory,
+                        [5] = Namespace.Gem,
+                        [6] = Namespace.CustomWeapon,
+                    };
+                    shopMapping = new Dictionary<int, Namespace>
+                    {
+                        [0] = Namespace.Weapon,
+                        [1] = Namespace.Protector,
+                        [2] = Namespace.Accessory,
+                        [3] = Namespace.Goods,
+                        [4] = Namespace.Gem,
+                        [5] = Namespace.CustomWeapon,
+                    };
+                }
+                else
+                {
+                    // Slight annoying differences
+                    lotMapping = new Dictionary<int, Namespace>
+                    {
+                        [1] = Namespace.Goods,
+                        [2] = Namespace.Weapon,
+                        [3] = Namespace.Protector,
+                        [4] = Namespace.Accessory,
+                        [5] = Namespace.Antique,
+                        [6] = Namespace.CustomWeapon,
+                        [7] = Namespace.ItemTable,
+                    };
+                    shopMapping = new Dictionary<int, Namespace>
+                    {
+                        [0] = Namespace.Weapon,
+                        // Unknown (invalid ids)
+                        [1] = Namespace.Protector,
+                        [2] = Namespace.Accessory,
+                        [3] = Namespace.Goods,
+                        [4] = Namespace.Antique,
+                        [5] = Namespace.ItemTable,
+                        [6] = Namespace.CustomWeapon,
+                    };
+                }
                 foreach (string variant in new[] { "map", "enemy" })
                 {
                     foreach (PARAM.Row row in Params[$"ItemLotParam_{variant}"].Rows)
@@ -320,23 +372,13 @@ namespace SoulsIds
                         {
                             u.Add(Verb.WRITES, lot, Obj.EventFlag(eventFlag));
                         }
-                        Dictionary<int, Namespace> typeMapping = new Dictionary<int, Namespace>
-                        {
-                            // The enum order is WEAPON PROTECTOR ACCESSORY GOODS (GEM ART)
-                            [1] = Namespace.Goods,
-                            [2] = Namespace.Weapon,
-                            [3] = Namespace.Protector,
-                            [4] = Namespace.Accessory,
-                            [5] = Namespace.Gem,
-                            [6] = Namespace.Global,  // TODO: This is the own weapon
-                        };
                         for (int i = 1; i <= 8; i++)
                         {
                             int id = (int)row[$"lotItemId0{i}"].Value;
                             int type = (int)row[$"lotItemCategory0{i}"].Value;
                             if (id != 0 && type != 0)
                             {
-                                Namespace itemType = typeMapping[type];
+                                Namespace itemType = lotMapping[type];
                                 Obj item = Obj.Of(itemType, id);
                                 u.Add(Verb.PRODUCES, lot, item);
                                 if (u.Names.ContainsKey(item) && !u.Names.ContainsKey(lot))
@@ -371,10 +413,10 @@ namespace SoulsIds
 
                     int type = (byte)row["equipType"].Value;
                     int id = (int)row["equipId"].Value;
-                    // List<Obj> objs = new List<uint> { 0, 1, 2, 3, 4, 5 }.Select(t => Obj.Item(t, id)).Where(t => u.Names.ContainsKey(t) && !string.IsNullOrEmpty(u.Names[t])).ToList();
-                    // Console.WriteLine($"shop {row.ID}: for type {type}, these exist: {string.Join(", ", objs.Select(o => $"{o}={u.Names[o]}"))}");
 
-                    Obj item = Obj.Item((uint)type, id);
+                    Namespace itemType = shopMapping[type];
+                    Obj item = Obj.Of(itemType, id);
+
                     u.Add(Verb.PRODUCES, shop, item);
                     if (u.Names.ContainsKey(item))
                     {
@@ -394,6 +436,7 @@ namespace SoulsIds
                 // Also other misc param-based text I suppose
                 foreach (PARAM.Row row in Params["GestureParam"].Rows)
                 {
+                    // TODO fix
                     Obj item = Obj.Of(Namespace.Goods, (int)row["itemId"].Value);
                     if (u.Names.ContainsKey(item))
                     {

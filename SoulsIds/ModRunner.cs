@@ -8,18 +8,39 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+using static SoulsIds.GameSpec;
 
 namespace SoulsIds
 {
     public class ModRunner
     {
         private Process currentProcess;
+        private readonly FromGame game;
+        private readonly string optName;
+        private readonly string processName;
         private readonly string modengineConfig;
         private readonly string modengineLauncher;
         private readonly string modengineDllConfig;
 
-        public ModRunner(string modengineConfig, string modengineLauncher, string modengineDllConfig = null)
+        public ModRunner(FromGame game, string modengineConfig, string modengineLauncher, string modengineDllConfig = null)
         {
+            this.game = game;
+            if (game == FromGame.ER)
+            {
+                optName = "er";
+                processName = "eldenring";
+            }
+            else if (game == FromGame.DS3)
+            {
+                optName = "ds3";
+                processName = "DarkSoulsIII";
+            }
+            else if (game == FromGame.DS1R)
+            {
+                optName = "dsr";
+                processName = "DarkSoulsRemastered";
+            }
+            else throw new ArgumentException($"Unsupported game {game}");
             this.modengineConfig = modengineConfig;
             this.modengineLauncher = modengineLauncher;
             this.modengineDllConfig = modengineDllConfig;
@@ -162,25 +183,27 @@ mods = [
 
         public bool IsValid() => File.Exists(modengineConfig) && File.Exists(modengineLauncher);
 
-        private static bool? IsMaybeRunning()
+        private bool? IsMaybeRunning()
         {
             try
             {
-                return Process.GetProcessesByName("eldenring").Length > 0;
+                return Process.GetProcessesByName(processName).Length > 0;
             }
             catch (Exception) { }
             return null;
         }
 
-        public bool IsEldenRingRunning() => IsMaybeRunning() ?? false;
+        public bool IsGameRunning() => IsMaybeRunning() ?? false;
         public bool IsLaunching() => currentProcess != null;
 
-        public async Task LaunchEldenRing(List<string> extraDlls = null)
+        public async Task LaunchGame(List<string> extraDlls = null)
         {
             if (currentProcess != null) return;
             string launchFile = modengineConfig;
             if (extraDlls != null && extraDlls.Count > 0 && File.Exists(modengineConfig))
             {
+                // In this case (DS1 for now), pass extraDlls into the launch file instead
+                // This flow is done on launch, to avoid rerunning randomizer for separate dll list
                 if (modengineDllConfig == null) throw new Exception($"Internal error: extra dlls given but no dll config name is defined");
                 MergedMods.AddExternalDlls(modengineConfig, modengineDllConfig, extraDlls);
                 launchFile = modengineDllConfig;
@@ -189,7 +212,8 @@ mods = [
             {
                 process.StartInfo.FileName = modengineLauncher;
                 // TODO: Add ..s based on how many are present in the launcher
-                process.StartInfo.Arguments = $@"-t er -c ..\..\{launchFile}";
+                // TODO: Add game directory here? Escaping path names is a mess
+                process.StartInfo.Arguments = $@"-t {optName} -c ..\..\{launchFile}";
                 process.StartInfo.WorkingDirectory = Path.GetDirectoryName(modengineLauncher);
                 process.StartInfo.UseShellExecute = false;
                 process.EnableRaisingEvents = true;
@@ -283,7 +307,7 @@ mods = [
             File.WriteAllText(tomlPath, MakeLaunchFileForZip(mods));
             string batName = $"launchmod_{runName}.bat";
             string batPath = Path.Combine(meDir, batName + ".auto");
-            File.WriteAllText(batPath, $@".\modengine2_launcher.exe -t er -c .\{modengineConfig}{Environment.NewLine}");
+            File.WriteAllText(batPath, $@".\modengine2_launcher.exe -t {optName} -c .\{modengineConfig}{Environment.NewLine}");
             string meHash = GetSHA256Hash(modengineLauncher);
             if (!validModEngineSHA256.Contains(meHash))
             {

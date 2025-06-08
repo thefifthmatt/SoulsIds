@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using SoulsFormats;
 using static SoulsFormats.EMEVD.Instruction;
+using System.Net;
 
 namespace SoulsIds
 {
@@ -96,12 +97,14 @@ namespace SoulsIds
         private readonly bool darkScriptMode;
         private readonly bool paramAwareMode;
         private readonly bool liteMode;
+        private readonly bool skipAwareMode;
 
         public Events(
             string emedfPath,
             bool darkScriptMode = false,
             bool paramAwareMode = false,
-            List<InstructionValueSpec> valueSpecs = null)
+            List<InstructionValueSpec> valueSpecs = null,
+            bool skipAwareMode = false)
         {
             if (emedfPath == null)
             {
@@ -137,6 +140,7 @@ namespace SoulsIds
             }
             this.darkScriptMode = darkScriptMode;
             this.paramAwareMode = paramAwareMode;
+            this.skipAwareMode = skipAwareMode;
 
             docByName = doc.Classes.SelectMany(c => c.Instructions.Select(i => (i, (int)c.Index))).ToDictionary(i => i.Item1.Name, i => (i.Item2, (int)i.Item1.Index));
             funcBytePositions = new Dictionary<EMEDF.InstrDoc, List<int>>();
@@ -215,6 +219,7 @@ namespace SoulsIds
                     }
                     types.Add(metaType);
                 }
+                Dictionary<string, string> aliasNames = new();
                 if (doc.DarkScript.MetaAliases != null)
                 {
                     foreach (KeyValuePair<string, List<string>> entry in doc.DarkScript.MetaAliases)
@@ -222,6 +227,7 @@ namespace SoulsIds
                         foreach (string name in entry.Value)
                         {
                             exactTypes[name] = exactTypes[entry.Key];
+                            aliasNames[name] = entry.Key;
                         }
                     }
                 }
@@ -261,7 +267,9 @@ namespace SoulsIds
                             {
                                 foreach (string argName in applicable.MultiNames)
                                 {
-                                    EMEDF.ArgDoc multiArg = instr.Arguments.Where(a => a.Name == argName).FirstOrDefault();
+                                    EMEDF.ArgDoc multiArg = instr.Arguments
+                                        .Where(a => a.Name == argName || aliasNames.TryGetValue(a.Name, out string alias) && alias == argName)
+                                        .FirstOrDefault();
                                     if (multiArg == null)
                                     {
                                         break;
@@ -295,7 +303,11 @@ namespace SoulsIds
                                 EMEDF.DarkScriptType metaType = arg.MetaType;
                                 if (metaType.DataType == "entity")
                                 {
-                                    if (metaType.Name != null || (metaType.MultiNames != null && arg.Name == metaType.MultiNames.Last()))
+                                    if (!aliasNames.TryGetValue(arg.Name, out string argName))
+                                    {
+                                        argName = arg.Name;
+                                    }
+                                    if (metaType.Name != null || (metaType.MultiNames != null && argName == metaType.MultiNames.Last()))
                                     {
                                         valueType = EventValueType.Entity;
                                     }
@@ -447,10 +459,11 @@ namespace SoulsIds
         // Instruction metadata
         public Instr Parse(EMEVD.Instruction instr, OldParams pre = null)
         {
-            bool isInit = instr.Bank == 2000 && (instr.ID == 0 || instr.ID == 6);
             // if (onlyCmd && isInit) return null;
             // if (onlyInit && !isInit) return null;
-            EMEDF.InstrDoc instrDoc = doc[instr.Bank][instr.ID];
+            EMEDF.InstrDoc instrDoc = doc[instr.Bank]?[instr.ID];
+            // if (instrDoc == null) throw new Exception($"Unknown {FormatInstructionID(instr.Bank, instr.ID)}");
+            bool isInit = instr.Bank == 2000 && (instr.ID == 0 || instr.ID == 6) && instrDoc != null && instrDoc.Name.StartsWith("Init");
             List<ArgType> argTypes = (isInit || instrDoc == null)
                 ? Enumerable.Repeat(ArgType.Int32, instr.ArgData.Length / 4).ToList()
                 : instrDoc.Arguments.Select(arg => arg.Type == 8 ? ArgType.UInt32 : (ArgType)arg.Type).ToList();
@@ -1752,6 +1765,10 @@ namespace SoulsIds
 
         public void ApplyAdds(EventEdits edits, EMEVD.Event e, OldParams oldParams = null)
         {
+            if (edits.PendingAdds.Count == 0)
+            {
+                return;
+            }
             EMEVD.Instruction parseAddCmd(string add)
             {
                 (EMEVD.Instruction instr, List<EMEVD.Parameter> ps) = ParseAddOptArg(add);
@@ -1763,36 +1780,103 @@ namespace SoulsIds
                 return instr;
             }
             // Add all commands in reverse order, to preserve indices
-            foreach (KeyValuePair<int, List<InstrEdit>> lineEdit in edits.PendingAdds.OrderByDescending(item => item.Key))
+            // When rewriting skips, have to look at all commands. Only supported for darkScriptMode
+            if (skipAwareMode)
             {
-                if (lineEdit.Key == -1)
+                List<int> addedLines = new List<int>();
+                for (int j = e.Instructions.Count - 1; j >= 0; j--)
                 {
-                    // At the end. This is not being inserted repeatedly at an index, so re-reverse the order back to normal
-                    foreach (InstrEdit addEdit in lineEdit.Value)
+                    // Console.WriteLine($"Have {e.ID} {e.Instructions.Count} instructions, got {e.Instructions[j]} {j}");
+                    // TODO: Figure out a better command to use in DS1
+                    Instr instr = e.Instructions[j].Bank == 1014 ? null : Parse(e.Instructions[j], oldParams);
+                    int added = 0;
+                    if (edits.PendingAdds.TryGetValue(j, out List<InstrEdit> lineEdit))
+                    {
+                        foreach (InstrEdit addEdit in Enumerable.Reverse(lineEdit))
+                        {
+                            if (addEdit.Add != null && addEdit.Type == EditType.AddAfter)
+                            {
+                                EMEVD.Instruction newInstr = parseAddCmd(addEdit.Add);
+                                e.Instructions.Insert(j + 1, newInstr);
+                                edits.PendingEdits.Remove(addEdit);
+                                added++;
+                            }
+                        }
+                    }
+                    if (instr?.Name != null && (instr.Name.StartsWith("SkipIf") || instr.Name == "SkipUnconditionally"))
+                    {
+                        int skip = (byte)instr[0];
+                        // Look at last n "original" instructions to see how many were duplicated, including after this command
+                        int skipExtra = added + Enumerable.Reverse(addedLines).Take(skip).Sum();
+                        if (skipExtra > 0)
+                        {
+                            instr[0] = (byte)(skip + skipExtra);
+                            // Make sure to transfer existing parameters
+                            List<EMEVD.Parameter> ps = oldParams?.GetInstructionParams(e.Instructions[j]);
+                            instr.Save(oldParams);
+                            e.Instructions[j] = instr.Val;
+                            oldParams?.AddParameters(instr.Val, ps);
+                            // Console.WriteLine(instr.ToString());
+                        }
+                    }
+                    if (lineEdit != null)
+                    {
+                        foreach (InstrEdit addEdit in Enumerable.Reverse(lineEdit))
+                        {
+                            if (addEdit.Add != null && addEdit.Type != EditType.AddAfter)
+                            {
+                                EMEVD.Instruction newInstr = parseAddCmd(addEdit.Add);
+                                e.Instructions.Insert(j, newInstr);
+                                edits.PendingEdits.Remove(addEdit);
+                                added++;
+                            }
+                        }
+                    }
+                    addedLines.Add(added);
+                }
+                if (edits.PendingAdds.TryGetValue(-1, out List<InstrEdit> lastEdit))
+                {
+                    foreach (InstrEdit addEdit in lastEdit)
                     {
                         EMEVD.Instruction instr = parseAddCmd(addEdit.Add);
                         e.Instructions.Add(instr);
                         edits.PendingEdits.Remove(addEdit);
                     }
-                    continue;
                 }
-                // Repeatedly inserting at the same index will produce a reverse order from the list
-                foreach (InstrEdit addEdit in Enumerable.Reverse(lineEdit.Value))
+            }
+            else
+            {
+                foreach (KeyValuePair<int, List<InstrEdit>> lineEdit in edits.PendingAdds.OrderByDescending(item => item.Key))
                 {
-                    if (addEdit.Add != null && addEdit.Type == EditType.AddAfter)
+                    if (lineEdit.Key == -1)
                     {
-                        EMEVD.Instruction instr = parseAddCmd(addEdit.Add);
-                        e.Instructions.Insert(lineEdit.Key + 1, instr);
-                        edits.PendingEdits.Remove(addEdit);
+                        // At the end. This is not being inserted repeatedly at an index, so re-reverse the order back to normal
+                        foreach (InstrEdit addEdit in lineEdit.Value)
+                        {
+                            EMEVD.Instruction instr = parseAddCmd(addEdit.Add);
+                            e.Instructions.Add(instr);
+                            edits.PendingEdits.Remove(addEdit);
+                        }
+                        continue;
                     }
-                }
-                foreach (InstrEdit addEdit in Enumerable.Reverse(lineEdit.Value))
-                {
-                    if (addEdit.Add != null && addEdit.Type != EditType.AddAfter)
+                    // Repeatedly inserting at the same index will produce a reverse order from the list
+                    foreach (InstrEdit addEdit in Enumerable.Reverse(lineEdit.Value))
                     {
-                        EMEVD.Instruction instr = parseAddCmd(addEdit.Add);
-                        e.Instructions.Insert(lineEdit.Key, instr);
-                        edits.PendingEdits.Remove(addEdit);
+                        if (addEdit.Add != null && addEdit.Type == EditType.AddAfter)
+                        {
+                            EMEVD.Instruction instr = parseAddCmd(addEdit.Add);
+                            e.Instructions.Insert(lineEdit.Key + 1, instr);
+                            edits.PendingEdits.Remove(addEdit);
+                        }
+                    }
+                    foreach (InstrEdit addEdit in Enumerable.Reverse(lineEdit.Value))
+                    {
+                        if (addEdit.Add != null && addEdit.Type != EditType.AddAfter)
+                        {
+                            EMEVD.Instruction instr = parseAddCmd(addEdit.Add);
+                            e.Instructions.Insert(lineEdit.Key, instr);
+                            edits.PendingEdits.Remove(addEdit);
+                        }
                     }
                 }
             }
@@ -2437,6 +2521,7 @@ namespace SoulsIds
         {
             public string File { get; set; }
             public int Event { get; set; }
+            public int Flag { get; set; }
             public string Name { get; set; }
             public Instr Val { get; set; }
             public List<string> Args = new List<string>();
@@ -2467,7 +2552,9 @@ namespace SoulsIds
             // Whether to highlight a returned value. At least one per event is needed to display it in the config output.
             Predicate<T> highlightValue,
             // Whether to always highlight a certain instruction, for the purpose of custom investigations
-            Predicate<Instr> alwaysHighlight = null)
+            Predicate<Instr> alwaysHighlight = null,
+            // Whether to process non-constructor inits as regular commands
+            bool nonConstructorInitCommands = false)
             where I : InstructionAny<T>, new()
             where E : EventAny<T, I>, new()
         {
@@ -2491,7 +2578,7 @@ namespace SoulsIds
                     {
                         // TODO: Can paramAwareMode be used to simplify this?
                         Instr instr = Parse(e.Instructions[i]);
-                        if (instr.Init) continue;
+                        if (!nonConstructorInitCommands && instr.Init) continue;
                         // Process parameters first
                         List<(EventKey, int)> usedParams = new List<(EventKey, int)>();
                         foreach (EMEVD.Parameter param in e.Parameters)
@@ -2557,10 +2644,34 @@ namespace SoulsIds
                 {
                     EventKey key = new EventKey((int)e.ID, entry.Key);
                     EventAny<T, I> eventInfo = eventInfos[key];
+                    // Basic tracking for top-level flag guarding by skips (DS1)
+                    // Semi-related, some events are not safe to add inits to the end due to EndIfs.
+                    int initFlag = 0;
+                    int skipLast = 0;
                     for (int i = 0; i < e.Instructions.Count; i++)
                     {
                         Instr instr = Parse(e.Instructions[i]);
-                        if (!instr.Init) continue;
+                        if (i > skipLast)
+                        {
+                            initFlag = 0;
+                        }
+                        if (!instr.Init)
+                        {
+                            if (initFlag == 0 && instr.Name == "SkipIfEventFlag")
+                            {
+                                initFlag = instr[3] is int id ? id : (int)(uint)instr[3];
+                                // Skip if flag off means flag must be on (positive). Skip flag on is inverted.
+                                if ((byte)instr[1] == 1) initFlag = -initFlag;
+                                skipLast = i + (byte)instr[0];
+                            }
+                            else if (initFlag != 0 && i == skipLast && instr.Name == "SkipUnconditionally")
+                            {
+                                // Inits are eligible if <= skipLast
+                                initFlag = -initFlag;
+                                skipLast = i + (byte)instr[0];
+                            }
+                            continue;
+                        }
                         string calleeMap = instr.Val.ID == 6 ? "common_func" : key.Map;
                         EventKey callee = new EventKey(instr.Callee, calleeMap);
                         if (!eventInfos.TryGetValue(callee, out E calleeInfo))
@@ -2606,6 +2717,10 @@ namespace SoulsIds
                                 Space = darkScriptMode ? "" : " ",
                                 CallIDs = initVals,
                             };
+                            if (initFlag != 0)
+                            {
+                                caller.Flag = initFlag;
+                            }
                             calleeInfo.Callers.Add(caller);
                             List<T> callIds = initVals.Select(v => v.Item2).ToList();
                             calleeInfo.CallerIDs.AddRange(callIds);
@@ -2764,13 +2879,16 @@ namespace SoulsIds
                     }
                     spec.DebugInfo.RemoveAll(text => text == null);
                     HashSet<T> usedIds = new HashSet<T>(info.IDs);
-                    if (info.Callers.Count > 1 || info.UsesParameters)
+                    if (info.Callers.Count > 1 || info.UsesParameters || info.Callers.Any(c => c.Flag != 0))
                     {
                         List<string> initInfo = new List<string>();
                         bool first = true;
                         foreach (I caller in info.Callers)
                         {
-                            initInfo.Add(caller.CallString());
+                            string suffix = "";
+                            if (!constructorIds.Contains(caller.Event)) suffix += $" from {caller.Event}";
+                            if (caller.Flag != 0) suffix += caller.Flag > 0 ? $" if {caller.Flag}" : $" if not {-caller.Flag}";
+                            initInfo.Add(caller.CallString() + suffix);
                             foreach (T id in caller.IDs)
                             {
                                 if (usedIds.Add(id))
