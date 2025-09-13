@@ -1,0 +1,2144 @@
+SmallBaseData:
+- ID: 2000
+  Category: Map_Event
+  Name: Groveside
+- ID: 2010
+  Category: Map_Event
+  Name: Gatefront
+- ID: 2020
+  Category: Map_Event
+  Name: Stormhill North of Gate
+- ID: 2030
+  Category: Map_Event
+  Name: Northwest Stormhill
+- ID: 2040
+  Category: Map_Event
+  Name: South Lake
+- ID: 2050
+  Category: Map_Event
+  Name: Alexander Spot
+- ID: 2060
+  Category: Map_Event
+  Name: Northeast Stormhill
+- ID: 2070
+  Category: Map_Event
+  Name: Waypoint Ruins
+- ID: 2080
+  Category: Map_Event
+  Name: West Mistwood
+- ID: 2090
+  Category: Map_Event
+  Name: Northwest Mistwood
+- ID: 2100
+  Category: Map_Event
+  Name: Artist's Shack
+- ID: 2110
+  Category: Map_Event
+  Name: Summonwater Approach
+- ID: 2120
+  Category: Map_Event
+  Name: South Mistwood
+- ID: 2130
+  Category: Map_Event
+  Name: Minor Erdtree
+- ID: 2140
+  Category: Map_Event
+  Name: Northeast Mistwood
+- ID: 2150
+  Category: Map_Event
+  Name: Summonwater
+- ID: 3000
+  Category: Fort
+  Name: Lordsworn Captain
+- ID: 3000
+  Variation: 1
+  Category: Fort
+  Name: Abductor Virgin
+- ID: 3030
+  Category: Fort
+  Name: Guardian Golem
+- ID: 3030
+  Variation: 1
+  Category: Fort
+  Name: Crystalians
+- ID: 3190
+  Category: Fort
+  Name: Soldiers
+- ID: 3200
+  Category: Camp
+  Name: Banished Knights
+- ID: 3200
+  Variation: 1
+  Category: Camp
+  Name: Elder Lion
+- ID: 3210
+  Category: Camp
+  Name: Leonine Misbegotten
+- ID: 3210
+  Variation: 1
+  Category: Camp
+  Name: Redmane Knights
+- ID: 3210
+  Variation: 2
+  Category: Camp
+  Name: Royal Army Knights
+- ID: 3220
+  Category: Camp
+  Name: Flame Chariots
+- ID: 3220
+  Variation: 1
+  Category: Camp
+  Name: Frenzied Flame Troll
+- ID: 3400
+  Category: Ruins
+  Name: Erdtree Burial Watchdogs
+- ID: 3400
+  Variation: 1
+  Category: Ruins
+  Name: Sanguine Noble
+- ID: 3400
+  Variation: 2
+  Category: Ruins
+  Name: Ancient Heroes of Zamor
+- ID: 3400
+  Variation: 3
+  Category: Ruins
+  Name: Albinaurics
+- ID: 3410
+  Category: Ruins
+  Name: Perfumer
+- ID: 3410
+  Variation: 1
+  Category: Ruins
+  Name: Depraved Perfumer
+- ID: 3410
+  Variation: 2
+  Category: Ruins
+  Name: Battlemages
+- ID: 3410
+  Variation: 3
+  Category: Ruins
+  Name: Albinauric Archers
+- ID: 3410
+  Variation: 4
+  Category: Ruins
+  Name: Runebear
+- ID: 3420
+  Category: Ruins
+  Name: Wormface
+- ID: 3420
+  Variation: 1
+  Category: Ruins
+  Name: Unused Beastmen of Farum Azula
+- ID: 3430
+  Category: Ruins
+  Name: Beastmen of Farum Azula
+- ID: 3590
+  Category: Ruins
+  Name: Tutorial and Revenant Encounter
+- ID: 3790
+  Category: Township
+  Name: Township
+- ID: 3800
+  Category: Great_Church
+  Name: Oracle Envoys
+- ID: 3800
+  Variation: 1
+  Category: Great_Church
+  Name: Guardian Golem
+- ID: 3810
+  Category: Great_Church
+  Name: Fire Monk
+- ID: 3810
+  Variation: 1
+  Category: Great_Church
+  Name: Mausoleum Knight
+- ID: 4000
+  Category: Sorcerers_Rise
+  Name: Above Door
+- ID: 4000
+  Variation: 1
+  Category: Sorcerers_Rise
+  Name: Imp Statue
+- ID: 4000
+  Variation: 2
+  Category: Sorcerers_Rise
+  Name: Withered Trees
+- ID: 4000
+  Variation: 3
+  Category: Sorcerers_Rise
+  Name: Pool Reflection
+- ID: 4000
+  Variation: 4
+  Category: Sorcerers_Rise
+  Name: Fake Building
+- ID: 4000
+  Variation: 5
+  Category: Sorcerers_Rise
+  Name: Windy Trees
+- ID: 4000
+  Variation: 6
+  Category: Sorcerers_Rise
+  Name: Fog Door
+- ID: 4000
+  Variation: 7
+  Category: Sorcerers_Rise
+  Name: Fleeing Stump
+- ID: 4000
+  Variation: 8
+  Category: Sorcerers_Rise
+  Name: Unlit Candle
+- ID: 4000
+  Variation: 9
+  Category: Sorcerers_Rise
+  Name: Missing Statue
+- ID: 4090
+  Category: Sorcerers_Rise
+  Name: Above Door, Teleporting Trees, Missing Statue
+- ID: 4090
+  Variation: 1
+  Category: Sorcerers_Rise
+  Name: Imp Statue, Teleporting Trees, Fleeing Stump
+- ID: 4090
+  Variation: 2
+  Category: Sorcerers_Rise
+  Name: Pool Reflection, Teleporting Trees, Unlit Candle
+- ID: 4090
+  Variation: 3
+  Category: Sorcerers_Rise
+  Name: Above Door, Rear Withered Trees, Second Floor
+- ID: 4090
+  Variation: 4
+  Category: Sorcerers_Rise
+  Name: Fake Building, Pool Reflection, Second Floor
+- ID: 4090
+  Variation: 5
+  Category: Sorcerers_Rise
+  Name: Imp Statue, Windy Trees, Second Floor
+- ID: 4090
+  Variation: 6
+  Category: Sorcerers_Rise
+  Name: Windy Trees, Right of Door, Fleeing Stump
+- ID: 4090
+  Variation: 7
+  Category: Sorcerers_Rise
+  Name: Fake Building, Right of Door, Unlit Candle
+- ID: 4090
+  Variation: 8
+  Category: Sorcerers_Rise
+  Name: Rear Withered Trees, Right of Door, Missing Statue
+- ID: 4100
+  Category: Church
+  Name: Normal
+- ID: 4101
+  Category: Church
+  Name: Rats
+- ID: 4101
+  Variation: 1
+  Category: Church
+  Name: Rats Alt
+- ID: 4130
+  Category: Church
+  Name: Rotted
+- ID: 4190
+  Category: Church
+  Name: Unknown
+- ID: 4300
+  Category: Small_Camp
+  Name: Dogs and Soldiers
+- ID: 4300
+  Variation: 1
+  Category: Small_Camp
+  Name: Soldiers
+- ID: 4301
+  Category: Small_Camp
+  Name: Wandering Nobles
+- ID: 4301
+  Variation: 1
+  Category: Small_Camp
+  Name: Nobles and Soldiers
+- ID: 4302
+  Category: Small_Camp
+  Name: Foot Soldiers
+- ID: 4330
+  Category: Small_Camp
+  Name: Putrid Ancestral Followers
+- ID: 4330
+  Variation: 1
+  Category: Small_Camp
+  Name: Putrid Ancestral Followers Alt
+- ID: 4340
+  Category: Small_Camp
+  Name: Dogs
+- ID: 4340
+  Variation: 1
+  Category: Small_Camp
+  Name: Misbegotten
+- ID: 4341
+  Category: Small_Camp
+  Name: Demi-Humans
+- ID: 4341
+  Variation: 1
+  Category: Small_Camp
+  Name: Rats and Demi-Humans
+- ID: 4350
+  Category: Small_Camp
+  Name: Guilty
+- ID: 4350
+  Variation: 1
+  Category: Small_Camp
+  Name: Guilty Alt
+- ID: 4401
+  Category: Small_Camp
+  Name: Shack
+- ID: 4500
+  Category: Small_Camp
+  Name: Caravans
+- ID: 4501
+  Category: Small_Camp
+  Name: Caravans and Nobles
+- ID: 4551
+  Category: Field_Boss
+  Name: Black Knife Assassin
+- ID: 4552
+  Category: Event
+  Name: Maris
+- ID: 4553
+  Category: Event
+  Name: Gnoster
+- ID: 4555
+  Category: Event
+  Name: Libra
+- ID: 4600
+  Category: Night_Horde
+  Name: Trolls and Soldiers
+- ID: 4601
+  Category: Night_Horde
+  Name: Caelid Wildlife
+- ID: 4602
+  Category: Night_Horde
+  Name: Ants
+- ID: 4603
+  Category: Night_Horde
+  Name: Fingercreepers
+- ID: 4604
+  Category: Night_Horde
+  Name: Dragons
+- ID: 4605
+  Category: Night_Horde
+  Name: Guardian Golems
+- ID: 4606
+  Category: Night_Horde
+  Name: Revenant Followers
+- ID: 4650
+  Category: Evergaol
+  Name: Unused Banished Knights
+- ID: 4650
+  Variation: 1
+  Category: Evergaol
+  Name: Unused Nox Duo
+- ID: 4650
+  Variation: 2
+  Category: Evergaol
+  Name: Omen
+- ID: 4650
+  Variation: 3
+  Category: Evergaol
+  Name: Grave Warden Duelist
+- ID: 4650
+  Variation: 4
+  Category: Evergaol
+  Name: Beastmen of Farum Azula
+- ID: 4650
+  Variation: 5
+  Category: Evergaol
+  Name: Beastly Brigade
+- ID: 4650
+  Variation: 6
+  Category: Evergaol
+  Name: Unused Bloodhound Knight
+- ID: 4651
+  Category: Field_Boss
+  Name: Red Wolf
+- ID: 4652
+  Category: Strong_Field_Boss
+  Name: Draconic Tree Sentinel
+- ID: 4653
+  Category: Strong_Field_Boss
+  Name: Tree Sentinel
+- ID: 4654
+  Category: Strong_Field_Boss
+  Name: Royal Carian Knight
+- ID: 4655
+  Category: Field_Boss
+  Name: Leonine Misbegotten
+- ID: 4656
+  Category: Strong_Field_Boss
+  Name: Bell Bearing Hunter
+- ID: 4657
+  Category: Field_Boss
+  Name: Elder Lion
+- ID: 4658
+  Category: Strong_Field_Boss
+  Name: Flying Dragon
+- ID: 4659
+  Category: Field_Boss
+  Name: Royal Revenant
+- ID: 4660
+  Category: Evergaol
+  Name: Crucible Knight with Sword
+- ID: 4660
+  Variation: 1
+  Category: Evergaol
+  Name: Crucible Knight with Spear
+- ID: 4660
+  Variation: 2
+  Category: Evergaol
+  Name: Crystalians
+- ID: 4660
+  Variation: 3
+  Category: Evergaol
+  Name: Stoneskin Lords
+- ID: 4660
+  Variation: 4
+  Category: Evergaol
+  Name: Banished Knights
+- ID: 4660
+  Variation: 5
+  Category: Evergaol
+  Name: Nox Warriors
+- ID: 4660
+  Variation: 6
+  Category: Evergaol
+  Name: Bloodhound Knight
+- ID: 4662
+  Category: Field_Boss
+  Name: Night's Cavalry
+- ID: 4663
+  Category: Strong_Field_Boss
+  Name: Ulcerated Tree Spirit
+- ID: 4664
+  Category: Strong_Field_Boss
+  Name: Ancestor Spirit
+- ID: 4665
+  Category: Field_Boss
+  Name: Grafted Scion
+- ID: 4666
+  Category: Strong_Field_Boss
+  Name: Black Blade Kindred
+- ID: 4667
+  Category: Strong_Field_Boss
+  Name: Erdtree Avatar
+- ID: 4668
+  Category: Strong_Field_Boss
+  Name: Magma Wyrm
+- ID: 4669
+  Category: Field_Boss
+  Name: Ancient Hero of Zamor
+- ID: 4670
+  Category: Evergaol
+  Name: Dragonkin Soldier
+- ID: 4670
+  Variation: 1
+  Category: Evergaol
+  Name: Godskin Apostle
+- ID: 4670
+  Variation: 2
+  Category: Evergaol
+  Name: Godskin Noble
+- ID: 4670
+  Variation: 3
+  Category: Evergaol
+  Name: Crucible Knight with Sword
+- ID: 4670
+  Variation: 4
+  Category: Evergaol
+  Name: Crucible Knight with Spear
+- ID: 4671
+  Category: Field_Boss
+  Name: Miranda Blossom
+- ID: 4672
+  Category: Field_Boss
+  Name: Golden Hippopotamus
+- ID: 4674
+  Category: Strong_Field_Boss
+  Name: Death Rite Bird
+- ID: 4677
+  Category: Field_Boss
+  Name: Demi-Human Queen
+- ID: 4678
+  Category: Event
+  Name: Morgott
+- ID: 4680
+  Category: Evergaol
+  Name: Death Rite Bird
+- ID: 4680
+  Variation: 1
+  Category: Evergaol
+  Name: Ancient Dragon
+- ID: 4680
+  Variation: 2
+  Category: Evergaol
+  Name: Godskin Duo
+- ID: 4681
+  Category: Arena_Boss
+  Name: Black Knife Assassin
+- ID: 4682
+  Category: Arena_Boss
+  Name: Red Wolf
+- ID: 4686
+  Category: Arena_Boss
+  Name: Leonine Misbegotten
+- ID: 4687
+  Category: Arena_Boss
+  Name: Bell Bearing Hunter
+- ID: 4688
+  Category: Arena_Boss
+  Name: Royal Revenant
+- ID: 4690
+  Category: Arena_Boss
+  Name: Ancestor Spirit
+- ID: 4691
+  Category: Arena_Boss
+  Name: Grafted Scion
+- ID: 4695
+  Category: Arena_Boss
+  Name: Ancient Hero of Zamor
+- ID: 4770
+  Category: Night_Boss
+  Name: Tibia Mariner
+- ID: 4770
+  Variation: 1
+  Category: Night_Boss
+  Name: Tibia Mariner Only
+- ID: 4780
+  Category: Night_Boss
+  Name: Gaping Dragon
+- ID: 4780
+  Variation: 1
+  Category: Night_Boss
+  Name: Gaping Dragon Only
+- ID: 4790
+  Category: Night_Boss
+  Name: Centipede Demon
+- ID: 4790
+  Variation: 1
+  Category: Night_Boss
+  Name: Centipede Demon Only
+- ID: 4800
+  Category: Night_Boss
+  Name: The Duke's Dear Freja
+- ID: 4800
+  Variation: 1
+  Category: Night_Boss
+  Name: The Duke's Dear Freja Only
+- ID: 4810
+  Category: Night_Boss
+  Name: Smelter Demon
+- ID: 4810
+  Variation: 1
+  Category: Night_Boss
+  Name: Smelter Demon Only
+- ID: 4820
+  Category: Night_Boss
+  Name: Nameless King
+- ID: 4820
+  Variation: 1
+  Category: Night_Boss
+  Name: Nameless King Only
+- ID: 4830
+  Category: Night_Boss
+  Name: Dancer of the Boreal Valley
+- ID: 4830
+  Variation: 1
+  Category: Night_Boss
+  Name: Dancer of the Boreal Valley Only
+- ID: 4840
+  Category: Night_Boss
+  Name: Morgott
+- ID: 4840
+  Variation: 1
+  Category: Night_Boss
+  Name: Morgott Only
+- ID: 4850
+  Category: Night_Boss
+  Name: Draconic Tree Sentinel and Royal Cavalrymen
+- ID: 4850
+  Variation: 1
+  Category: Night_Boss
+  Name: Draconic Tree Sentinel and Royal Cavalrymen Only
+- ID: 4860
+  Category: Night_Boss
+  Name: Tree Sentinel and Royal Cavalrymen
+- ID: 4860
+  Variation: 1
+  Category: Night_Boss
+  Name: Tree Sentinel and Royal Cavalrymen Only
+- ID: 4870
+  Category: Night_Boss
+  Name: Godskin Apostle
+- ID: 4870
+  Variation: 1
+  Category: Night_Boss
+  Name: Godskin Apostle Only
+- ID: 4880
+  Category: Night_Boss
+  Name: Godskin Duo
+- ID: 4880
+  Variation: 1
+  Category: Night_Boss
+  Name: Godskin Duo Only
+- ID: 4890
+  Category: Night_Boss
+  Name: Wormface
+- ID: 4890
+  Variation: 1
+  Category: Night_Boss
+  Name: Wormface Only
+- ID: 4910
+  Category: Night_Boss
+  Name: Grafted Monarch
+- ID: 4910
+  Variation: 1
+  Category: Night_Boss
+  Name: Grafted Monarch Only
+- ID: 4917
+  Category: Night_Boss
+  Name: Valiant Gargoyle
+- ID: 4917
+  Variation: 1
+  Category: Night_Boss
+  Name: Valiant Gargoyle Only
+- ID: 4918
+  Category: Night_Boss
+  Name: Great Wyrm
+- ID: 4918
+  Variation: 1
+  Category: Night_Boss
+  Name: Great Wyrm Only
+- ID: 4919
+  Category: Night_Boss
+  Name: Ancient Dragon
+- ID: 4919
+  Variation: 1
+  Category: Night_Boss
+  Name: Ancient Dragon Only
+- ID: 4920
+  Category: Night_Boss
+  Name: Fallingstar Beast
+- ID: 4920
+  Variation: 1
+  Category: Night_Boss
+  Name: Fallingstar Beast Only
+- ID: 4921
+  Category: Night_Boss
+  Name: Death Rite Bird
+- ID: 4921
+  Variation: 1
+  Category: Night_Boss
+  Name: Death Rite Bird Only
+- ID: 4923
+  Category: Night_Boss
+  Name: Dragonkin Soldier
+- ID: 4923
+  Variation: 1
+  Category: Night_Boss
+  Name: Dragonkin Soldier Only
+- ID: 4924
+  Category: Night_Boss
+  Name: Bell Bearing Hunter
+- ID: 4924
+  Variation: 1
+  Category: Night_Boss
+  Name: Bell Bearing Hunter Only
+- ID: 4925
+  Category: Night_Boss
+  Name: Crucible Knight and Golden Hippopotamus
+- ID: 4925
+  Variation: 1
+  Category: Night_Boss
+  Name: Crucible Knight and Golden Hippopotamus Only
+- ID: 4926
+  Category: Night_Boss
+  Name: Outland Commander
+- ID: 4926
+  Variation: 1
+  Category: Night_Boss
+  Name: Outland Commander Only
+- ID: 4927
+  Category: Night_Boss
+  Name: Battlefield Commander
+- ID: 4927
+  Variation: 1
+  Category: Night_Boss
+  Name: Battlefield Commander Only
+- ID: 4928
+  Category: Night_Boss
+  Name: Night's Cavalry Duo
+- ID: 4928
+  Variation: 1
+  Category: Night_Boss
+  Name: Night's Cavalry Duo Only
+- ID: 4929
+  Category: Night_Boss
+  Name: Demi-Human Queen and Swordmaster
+- ID: 4929
+  Variation: 1
+  Category: Night_Boss
+  Name: Demi-Human Queen and Swordmaster Only
+- ID: 4930
+  Category: Night_Boss
+  Name: Royal Revenant
+- ID: 4930
+  Variation: 1
+  Category: Night_Boss
+  Name: Royal Revenant Only
+- ID: 4940
+  Category: Event
+  Name: Scale-Bearing Merchant
+- ID: 4941
+  Category: Castle
+  Name: Banished Knights
+- ID: 4942
+  Category: Castle
+  Name: Trolls
+- ID: 4943
+  Category: Castle
+  Name: Crucible Knights
+- ID: 4990
+  Category: Night_Boss
+  Name: Ulcerated Tree Spirit
+- ID: 4990
+  Variation: 1
+  Category: Night_Boss
+  Name: Ulcerated Tree Spirit Only
+AttachPointData:
+- ID: 100
+  Category: Major_Base
+  Name: Gatefront
+  Exclude:
+  - Noklateo
+  GlobalPos: -276 -78
+- ID: 101
+  Category: Major_Base
+  Name: Groveside
+  Exclude:
+  - Noklateo
+  GlobalPos: -339 -235
+- ID: 103
+  Category: Major_Base
+  Name: Northwest Stormhill
+  Exclude:
+  - Mountaintop
+  GlobalPos: -414 339
+- ID: 104
+  Category: Major_Base
+  Name: South Lake
+  Exclude:
+  - Noklateo
+  GlobalPos: -157 -433
+- ID: 106
+  Category: Major_Base
+  Name: Alexander Spot
+  Exclude:
+  - Mountaintop
+  - Crater
+  GlobalPos: -128 307
+- ID: 107
+  Category: Major_Base
+  Name: Northeast Stormhill
+  Exclude:
+  - Mountaintop
+  - Crater
+  GlobalPos: -152 495
+- ID: 108
+  Category: Major_Base
+  Name: Waypoint Ruins
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 173 -286
+- ID: 109
+  Category: Major_Base
+  Name: West Mistwood
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 203 -137
+- ID: 110
+  Category: Major_Base
+  Name: Artist's Shack
+  Exclude:
+  - Crater
+  GlobalPos: 130 115
+- ID: 111
+  Category: Major_Base
+  Name: Northwest Mistwood
+  Exclude:
+  - Crater
+  GlobalPos: 254 58
+- ID: 112
+  Category: Major_Base
+  Name: Summonwater Approach
+  Exclude:
+  - Crater
+  GlobalPos: 201 320
+- ID: 113
+  Category: Major_Base
+  Name: South Mistwood
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 379 -364
+- ID: 114
+  Category: Major_Base
+  Name: Minor Erdtree
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 388 -196
+- ID: 116
+  Category: Major_Base
+  Name: Northeast Mistwood
+  GlobalPos: 423 119
+- ID: 117
+  Category: Major_Base
+  Name: Summonwater
+  GlobalPos: 328 438
+- ID: 120
+  Category: Major_Base
+  Name: Stormhill North of Gate
+  Exclude:
+  - Mountaintop
+  GlobalPos: -331 84
+- ID: 121
+  Category: Starter_Major_Base
+  Name: Groveside
+  ParentID: 101
+  Exclude:
+  - Noklateo
+  GlobalPos: -339 -235
+- ID: 122
+  Category: Starter_Major_Base
+  Name: Gatefront
+  ParentID: 100
+  Exclude:
+  - Noklateo
+  GlobalPos: -276 -78
+- ID: 123
+  Category: Starter_Major_Base
+  Name: Stormhill North of Gate
+  ParentID: 120
+  Exclude:
+  - Mountaintop
+  GlobalPos: -331 84
+- ID: 124
+  Category: Starter_Major_Base
+  Name: Stormhill North of Gate Alt
+  ParentID: 120
+  Exclude:
+  - Mountaintop
+  GlobalPos: -331 84
+- ID: 125
+  Category: Starter_Major_Base
+  Name: Waypoint Ruins
+  ParentID: 108
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 173 -286
+- ID: 126
+  Category: Starter_Major_Base
+  Name: Waypoint Ruins Alt
+  ParentID: 108
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 173 -286
+- ID: 127
+  Category: Starter_Major_Base
+  Name: Summonwater Approach
+  ParentID: 112
+  Exclude:
+  - Crater
+  GlobalPos: 201 320
+- ID: 128
+  Category: Starter_Major_Base
+  Name: Minor Erdtree
+  ParentID: 114
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 388 -196
+- ID: 129
+  Category: Starter_Major_Base
+  Name: Northwest Mistwood
+  ParentID: 111
+  Exclude:
+  - Crater
+  GlobalPos: 254 58
+- ID: 190
+  Category: Castle
+  Name: Castle
+  Exclude:
+  - Noklateo
+  GlobalPos: -38.300003 -65.34
+- ID: 300
+  Category: Minor_Base
+  Name: Far Southwest
+  Exclude:
+  - Noklateo
+  GlobalPos: -458 -322
+- ID: 301
+  Category: Minor_Base
+  Name: Stormhill South of Gate
+  Exclude:
+  - Noklateo
+  GlobalPos: -450 -84
+- ID: 302
+  Category: Minor_Base
+  Name: West of Warmaster's Shack
+  Exclude:
+  - Mountaintop
+  GlobalPos: -432 226.45999
+- ID: 305
+  Category: Minor_Base
+  Name: Lake
+  Exclude:
+  - Noklateo
+  GlobalPos: -71 -299
+- ID: 306
+  Category: Minor_Base
+  Name: Above Stormhill Tunnel Entrance
+  Exclude:
+  - Mountaintop
+  - Crater
+  GlobalPos: -214 160
+- ID: 307
+  Category: Minor_Base
+  Name: Southeast of Lake
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 106 -456
+- ID: 308
+  Category: Minor_Base
+  Name: East of Cavalry Bridge
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 76 -204
+- ID: 309
+  Category: Rotted_Woods
+  Name: Center West
+  Require: Rotted_Woods
+  GlobalPos: 162.33 -186.97
+- ID: 310
+  Category: Minor_Base
+  Name: Northeast of Saintsbridge
+  Exclude:
+  - Crater
+  GlobalPos: 56 428
+- ID: 312
+  Category: Minor_Base
+  Name: Minor Erdtree
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 470 -124
+- ID: 313
+  Category: Minor_Base
+  Name: Third Church
+  GlobalPos: 428 225
+- ID: 314
+  Category: Minor_Base
+  Name: Below Summonwater Hawk
+  GlobalPos: 298 209
+- ID: 315
+  Category: Rotted_Woods
+  Name: Southwest
+  Require: Rotted_Woods
+  GlobalPos: 227.06 -371.42
+- ID: 316
+  Category: Rotted_Woods
+  Name: Northwest
+  Require: Rotted_Woods
+  GlobalPos: 200.97 -88.119995
+- ID: 317
+  Category: Rotted_Woods
+  Name: Far Northwest
+  Require: Rotted_Woods
+  GlobalPos: 114.42 -99.61
+- ID: 318
+  Category: Rotted_Woods
+  Name: Center East
+  Require: Rotted_Woods
+  GlobalPos: 343.23 -211.51001
+- ID: 319
+  Category: Rotted_Woods
+  Name: Far Northeast
+  Require: Rotted_Woods
+  GlobalPos: 433.5 -81.72
+- ID: 320
+  Category: Rotted_Woods
+  Name: Northeast
+  Require: Rotted_Woods
+  GlobalPos: 409.51 -153.69
+- ID: 321
+  Category: Minor_Base
+  Name: Rotted Church
+  Require: Rotted_Woods
+  GlobalPos: 271.01 -161.61
+- ID: 322
+  Category: Rotted_Woods
+  Name: Southeast
+  Require: Rotted_Woods
+  GlobalPos: 437.98 -291.54
+- ID: 350
+  Category: Starter_Minor_Base
+  Name: Far Southwest
+  ParentID: 300
+  Exclude:
+  - Noklateo
+  GlobalPos: -458 -322
+- ID: 351
+  Category: Starter_Minor_Base
+  Name: Stormhill South of Gate
+  ParentID: 301
+  Exclude:
+  - Noklateo
+  GlobalPos: -450 -84
+- ID: 352
+  Category: Starter_Minor_Base
+  Name: West of Warmaster's Shack
+  ParentID: 302
+  Exclude:
+  - Mountaintop
+  GlobalPos: -432 226.45999
+- ID: 356
+  Category: Starter_Minor_Base
+  Name: Above Stormhill Tunnel Entrance
+  ParentID: 306
+  Exclude:
+  - Mountaintop
+  - Crater
+  GlobalPos: -214 160
+- ID: 357
+  Category: Starter_Minor_Base
+  Name: Southeast of Lake
+  ParentID: 307
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 106 -456
+- ID: 358
+  Category: Starter_Minor_Base
+  Name: East of Cavalry Bridge
+  ParentID: 308
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 76 -204
+- ID: 360
+  Category: Starter_Minor_Base
+  Name: Northeast of Saintsbridge
+  ParentID: 310
+  Exclude:
+  - Crater
+  GlobalPos: 56 428
+- ID: 362
+  Category: Starter_Minor_Base
+  Name: Minor Erdtree
+  ParentID: 312
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 470 -124
+- ID: 364
+  Category: Starter_Minor_Base
+  Name: Below Summonwater Hawk
+  ParentID: 314
+  GlobalPos: 298 209
+- ID: 500
+  Category: Night_Boss
+  Name: Southwest Corner
+  Exclude:
+  - Noklateo
+  GlobalPos: -358 -388
+- ID: 502
+  Category: Night_Boss
+  Name: West Stormhill Graveyard
+  Exclude:
+  - Mountaintop
+  GlobalPos: -438 149
+- ID: 503
+  Category: Night_Boss
+  Name: South Lake
+  Exclude:
+  - Noklateo
+  GlobalPos: -40 -413
+- ID: 504
+  Category: Night_Boss
+  Name: Northwest Lake
+  Exclude:
+  - Noklateo
+  GlobalPos: -203 -296
+- ID: 505
+  Category: Night_Boss
+  Name: South of Castle
+  Exclude:
+  - Noklateo
+  GlobalPos: -111 -186
+- ID: 506
+  Category: Night_Boss
+  Name: Northwest of Castle
+  Exclude:
+  - Mountaintop
+  - Crater
+  GlobalPos: -212 66
+- ID: 507
+  Category: Night_Boss
+  Name: Northeast of Lake
+  Exclude:
+  - Rotted_Woods
+  - Noklateo
+  GlobalPos: 75 -64
+- ID: 509
+  Category: Night_Boss
+  Name: East of Saintsbridge
+  Exclude:
+  - Crater
+  GlobalPos: 94 362
+- ID: 510
+  Category: Night_Boss
+  Name: Noklateo Entrance
+  Require: Noklateo
+  GlobalPos: -91.619995 -86.68
+- ID: 511
+  Category: Night_Boss
+  Name: Northeast Corner
+  GlobalPos: 448 425
+- ID: 512
+  Category: Night_Boss
+  Name: Southwest Mistwood
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 298 -295
+- ID: 513
+  Category: Night_Boss
+  Name: Northwest Mistwood Pond
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 293.53 -31.669998
+- ID: 514
+  Category: Night_Boss
+  Name: Southeast Rotted Woods
+  Require: Rotted_Woods
+  GlobalPos: 176.9 -292.65
+- ID: 515
+  Category: Night_Boss
+  Name: Northwest Rotted Woods
+  Require: Rotted_Woods
+  GlobalPos: 353.47 -74.130005
+- ID: 516
+  Category: Night_Boss
+  Name: Southeast Mountaintop
+  Require: Mountaintop
+  GlobalPos: -154.54001 163.82
+- ID: 517
+  Category: Night_Boss
+  Name: North of Crater
+  Require: Crater
+  GlobalPos: -39.010002 480.707
+- ID: 518
+  Category: Night_Boss
+  Name: Northwest Corner
+  Exclude:
+  - Mountaintop
+  GlobalPos: -438.12 445.66
+- ID: 520
+  Category: Event
+  Name: Gnoster, Southwest Corner
+  Exclude:
+  - Noklateo
+  GlobalPos: -358 -388
+- ID: 521
+  Category: Event
+  Name: Gnoster, West Stormhill Graveyard
+  Exclude:
+  - Mountaintop
+  GlobalPos: -438 149
+- ID: 522
+  Category: Event
+  Name: Gnoster, Southeast Lake
+  Exclude:
+  - Noklateo
+  GlobalPos: -40 -413
+- ID: 523
+  Category: Event
+  Name: Gnoster, Northwest Lake
+  Exclude:
+  - Noklateo
+  GlobalPos: -203 -296
+- ID: 524
+  Category: Event
+  Name: Gnoster, South of Castle
+  Exclude:
+  - Noklateo
+  GlobalPos: -111 -186
+- ID: 525
+  Category: Event
+  Name: Gnoster, Northwest of Castle
+  Exclude:
+  - Mountaintop
+  - Crater
+  GlobalPos: -212 66
+- ID: 526
+  Category: Event
+  Name: Gnoster, Castle Front
+  Exclude:
+  - Rotted_Woods
+  - Noklateo
+  GlobalPos: 75 -64
+- ID: 527
+  Category: Event
+  Name: Gnoster, East of Saintsbridge
+  Exclude:
+  - Crater
+  GlobalPos: 94 362
+- ID: 528
+  Category: Event
+  Name: Gnoster, Northeast Corner
+  GlobalPos: 448 425
+- ID: 529
+  Category: Event
+  Name: Gnoster, Southwest Mistwood
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 298 -295
+- ID: 530
+  Category: Event
+  Name: Gnoster, Northwest Mistwood
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 293.53 -31.669998
+- ID: 532
+  Category: Event
+  Name: Gnoster, Northwest Rotted Woods
+  Require: Rotted_Woods
+  GlobalPos: 353.47 -74.130005
+- ID: 533
+  Category: Event
+  Name: Gnoster, Southeast Mountaintop
+  Require: Mountaintop
+  GlobalPos: -154.54001 163.82
+- ID: 534
+  Category: Event
+  Name: Gnoster, North of Crater
+  Require: Crater
+  GlobalPos: -39.010002 480.707
+- ID: 535
+  Category: Event
+  Name: Gnoster, East of Noklateo Entrance
+  Require: Noklateo
+  GlobalPos: 75 -64
+- ID: 536
+  Category: Event
+  Name: Gnoster, Noklateo Entrance
+  Require: Noklateo
+  GlobalPos: -91.619995 -86.68
+- ID: 540
+  Category: Event
+  Name: Morgott, Southwest Corner
+  Exclude:
+  - Noklateo
+  GlobalPos: -358 -388
+- ID: 541
+  Category: Event
+  Name: Morgott, West Stormhill Graveyard
+  Exclude:
+  - Mountaintop
+  GlobalPos: -438 149
+- ID: 542
+  Category: Event
+  Name: Morgott, Southeast Lake
+  Exclude:
+  - Noklateo
+  GlobalPos: -40 -413
+- ID: 543
+  Category: Event
+  Name: Morgott, Northwest Lake
+  Exclude:
+  - Noklateo
+  GlobalPos: -203 -296
+- ID: 544
+  Category: Event
+  Name: Morgott, South of Castle
+  Exclude:
+  - Noklateo
+  GlobalPos: -111 -186
+- ID: 545
+  Category: Event
+  Name: Morgott, Northwest of Castle
+  Exclude:
+  - Mountaintop
+  - Crater
+  GlobalPos: -212 66
+- ID: 546
+  Category: Event
+  Name: Morgott, Castle Front
+  Exclude:
+  - Rotted_Woods
+  - Noklateo
+  GlobalPos: 75 -64
+- ID: 547
+  Category: Event
+  Name: Morgott, East of Saintsbridge
+  Exclude:
+  - Crater
+  GlobalPos: 94 362
+- ID: 548
+  Category: Event
+  Name: Morgott, Northeast Corner
+  GlobalPos: 448 425
+- ID: 549
+  Category: Event
+  Name: Morgott, Southwest Mistwood
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 298 -295
+- ID: 550
+  Category: Event
+  Name: Morgott, Northwest Mistwood
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 293.53 -31.669998
+- ID: 551
+  Category: Event
+  Name: Morgott, Southeast Rotted Woods
+  Require: Rotted_Woods
+  GlobalPos: 176.9 -292.65
+- ID: 552
+  Category: Event
+  Name: Morgott, Northwest Rotted Woods
+  Require: Rotted_Woods
+  GlobalPos: 353.47 -74.130005
+- ID: 553
+  Category: Event
+  Name: Morgott, Southeast Mountaintop
+  Require: Mountaintop
+  GlobalPos: -154.54001 163.82
+- ID: 554
+  Category: Event
+  Name: Morgott, North of Crater
+  Require: Crater
+  GlobalPos: -39.010002 480.707
+- ID: 555
+  Category: Event
+  Name: Morgott, East of Noklateo Entrance
+  Require: Noklateo
+  GlobalPos: 75 -64
+- ID: 556
+  Category: Event
+  Name: Morgott, Noklateo Entrance
+  Require: Noklateo
+  GlobalPos: -181 -64
+- ID: 560
+  Category: Event
+  Name: Maris, Southwest Corner
+  Exclude:
+  - Noklateo
+  GlobalPos: -358 -388
+- ID: 561
+  Category: Event
+  Name: Maris, West Stormhill Graveyard
+  Exclude:
+  - Mountaintop
+  GlobalPos: -438 149
+- ID: 562
+  Category: Event
+  Name: Maris, Southeast Lake
+  Exclude:
+  - Noklateo
+  GlobalPos: -40 -413
+- ID: 563
+  Category: Event
+  Name: Maris, Northwest Lake
+  Exclude:
+  - Noklateo
+  GlobalPos: -203 -296
+- ID: 564
+  Category: Event
+  Name: Maris, South of Castle
+  Exclude:
+  - Noklateo
+  GlobalPos: -111 -186
+- ID: 565
+  Category: Event
+  Name: Maris, Northwest of Castle
+  Exclude:
+  - Mountaintop
+  - Crater
+  GlobalPos: -212 66
+- ID: 566
+  Category: Event
+  Name: Maris, Castle Front
+  Exclude:
+  - Rotted_Woods
+  - Noklateo
+  GlobalPos: 75 -64
+- ID: 567
+  Category: Event
+  Name: Maris, East of Saintsbridge
+  Exclude:
+  - Crater
+  GlobalPos: 94 362
+- ID: 568
+  Category: Event
+  Name: Maris, Northeast Corner
+  GlobalPos: 448 425
+- ID: 569
+  Category: Event
+  Name: Maris, Southwest Mistwood
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 298 -295
+- ID: 570
+  Category: Event
+  Name: Maris, Northwest Mistwood
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 293.53 -31.669998
+- ID: 573
+  Category: Event
+  Name: Maris, Southeast Mountaintop
+  Require: Mountaintop
+  GlobalPos: -154.54001 163.82
+- ID: 574
+  Category: Event
+  Name: Maris, North of Crater
+  Require: Crater
+  GlobalPos: -39.010002 480.707
+- ID: 576
+  Category: Event
+  Name: Maris, East of Noklateo Entrance
+  Require: Noklateo
+  GlobalPos: 75 -64
+- ID: 577
+  Category: Event
+  Name: Maris, Noklateo Entrance
+  Require: Noklateo
+  GlobalPos: -91.619995 -86.68
+- ID: 580
+  Category: Event
+  Name: Libra, Southwest Corner
+  Exclude:
+  - Noklateo
+  GlobalPos: -358 -388
+- ID: 581
+  Category: Event
+  Name: Libra, West Stormhill Graveyard
+  Exclude:
+  - Mountaintop
+  GlobalPos: -438 149
+- ID: 582
+  Category: Event
+  Name: Libra, Southeast Lake
+  Exclude:
+  - Noklateo
+  GlobalPos: -40 -413
+- ID: 583
+  Category: Event
+  Name: Libra, Northwest Lake
+  Exclude:
+  - Noklateo
+  GlobalPos: -203 -296
+- ID: 584
+  Category: Event
+  Name: Libra, South of Castle
+  Exclude:
+  - Noklateo
+  GlobalPos: -111 -186
+- ID: 585
+  Category: Event
+  Name: Libra, Northwest of Castle
+  Exclude:
+  - Mountaintop
+  - Crater
+  GlobalPos: -212 66
+- ID: 586
+  Category: Event
+  Name: Libra, Castle Front
+  Exclude:
+  - Rotted_Woods
+  - Noklateo
+  GlobalPos: 75 -64
+- ID: 587
+  Category: Event
+  Name: Libra, East of Saintsbridge
+  Exclude:
+  - Crater
+  GlobalPos: 94 362
+- ID: 588
+  Category: Event
+  Name: Libra, Northeast Corner
+  GlobalPos: 448 425
+- ID: 589
+  Category: Event
+  Name: Libra, Southwest Mistwood
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 298 -295
+- ID: 590
+  Category: Event
+  Name: Libra, Northwest Mistwood
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 293.53 -31.669998
+- ID: 591
+  Category: Event
+  Name: Libra, Southeast Rotted Woods
+  Require: Rotted_Woods
+  GlobalPos: 176.9 -292.65
+- ID: 592
+  Category: Event
+  Name: Libra, Northwest Rotted Woods
+  Require: Rotted_Woods
+  GlobalPos: 353.47 -74.130005
+- ID: 593
+  Category: Event
+  Name: Libra, Southeast Mountaintop
+  Require: Mountaintop
+  GlobalPos: -154.54001 163.82
+- ID: 594
+  Category: Event
+  Name: Libra, North of Crater
+  Require: Crater
+  GlobalPos: -39.010002 480.707
+- ID: 595
+  Category: Event
+  Name: Libra, East of Noklateo Entrance
+  Require: Noklateo
+  GlobalPos: 75 -64
+- ID: 596
+  Category: Event
+  Name: Libra, Noklateo Entrance
+  Require: Noklateo
+  GlobalPos: -91.619995 -86.68
+- ID: 601
+  Category: Evergaol
+  Name: Stormhill
+  Exclude:
+  - Mountaintop
+  GlobalPos: -509.4 281.03
+- ID: 602
+  Category: Evergaol
+  Name: Northwest of Lake
+  Exclude:
+  - Noklateo
+  GlobalPos: -235.35 -202.35
+- ID: 603
+  Category: Evergaol
+  Name: Murkwater Terminus
+  Exclude:
+  - Mountaintop
+  - Crater
+  GlobalPos: -83.630005 181.18
+- ID: 604
+  Category: Evergaol
+  Name: Highroad
+  Exclude:
+  - Mountaintop
+  - Crater
+  GlobalPos: -28.21 466.09
+- ID: 605
+  Category: Evergaol
+  Name: East of Lake
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 185.3 -410.55
+- ID: 606
+  Category: Evergaol
+  Name: Northeast Tunnel Entrance
+  Exclude:
+  - Crater
+  GlobalPos: 201.22 210.15
+- ID: 607
+  Category: Evergaol
+  Name: Mistwood
+  GlobalPos: 445.87 18.379997
+- ID: 615
+  Category: Night_Horde
+  Name: West Lakeshore
+  Exclude:
+  - Noklateo
+  GlobalPos: -272.65 -397.79
+- ID: 616
+  Category: Night_Horde
+  Name: Southwest Corner
+  Exclude:
+  - Noklateo
+  GlobalPos: -426.39 -315.32
+- ID: 617
+  Category: Night_Horde
+  Name: Lake Southwest Cliffside
+  Exclude:
+  - Noklateo
+  GlobalPos: -321.51 -490.94
+- ID: 618
+  Category: Night_Horde
+  Name: South of Stormhill Ruins Bridge
+  Exclude:
+  - Noklateo
+  GlobalPos: -491.05 -19.849998
+- ID: 619
+  Category: Night_Horde
+  Name: South of Gatefront
+  Exclude:
+  - Noklateo
+  GlobalPos: -362.66 -81.19
+- ID: 620
+  Category: Night_Horde
+  Name: Groveside
+  Exclude:
+  - Noklateo
+  GlobalPos: -406.38 -165.82
+- ID: 621
+  Category: Night_Horde
+  Name: North of Stormhill Ruins Bridge
+  Exclude:
+  - Mountaintop
+  GlobalPos: -452.29 66.759995
+- ID: 622
+  Category: Night_Horde
+  Name: West of Warmaster's Shack
+  Exclude:
+  - Mountaintop
+  GlobalPos: -468.22 243.12
+- ID: 623
+  Category: Night_Horde
+  Name: West of Stormhill Tunnel Entrance
+  Exclude:
+  - Mountaintop
+  GlobalPos: -349.66998 164.93
+- ID: 624
+  Category: Night_Horde
+  Name: Northwest Corner, Unknown Attach Point
+  Invalid: true
+  GlobalPos: -345.83002 443.14
+- ID: 625
+  Category: Night_Horde
+  Name: Northwest Corner Field
+  Exclude:
+  - Mountaintop
+  GlobalPos: -326.74 400.37
+- ID: 626
+  Category: Night_Horde
+  Name: East of Warmaster's Shack
+  Exclude:
+  - Mountaintop
+  GlobalPos: -302.73 291.64
+- ID: 627
+  Category: Night_Horde
+  Name: Lake
+  Exclude:
+  - Noklateo
+  GlobalPos: -127.26 -354.7
+- ID: 628
+  Category: Night_Horde
+  Name: East Lakeshore
+  Exclude:
+  - Noklateo
+  GlobalPos: -14.550003 -326.32
+- ID: 629
+  Category: Night_Horde
+  Name: Lake South Cliffside
+  Exclude:
+  - Noklateo
+  GlobalPos: -68.82 -493.54
+- ID: 630
+  Category: Night_Horde
+  Name: Cavalry Bridge
+  Exclude:
+  - Noklateo
+  GlobalPos: -8.860001 -222.37
+- ID: 631
+  Category: Night_Horde
+  Name: Hill Southwest of Castle
+  Exclude:
+  - Noklateo
+  GlobalPos: -198.45999 -139.13
+- ID: 632
+  Category: Night_Horde
+  Name: East of Gatefront
+  Exclude:
+  - Noklateo
+  GlobalPos: -216.09 -23.36
+- ID: 633
+  Category: Night_Horde
+  Name: North of Castle, Unknown Attach Point 1
+  Invalid: true
+  GlobalPos: -27.260002 141.1
+- ID: 634
+  Category: Night_Horde
+  Name: North of Castle, Unknown Attach Point 2
+  Invalid: true
+  GlobalPos: -73.009995 33.36
+- ID: 635
+  Category: Night_Horde
+  Name: North of Castle, Unknown Attach Point 3
+  Invalid: true
+  GlobalPos: -210.2 216.58
+- ID: 636
+  Category: Night_Horde
+  Name: Northeast Stormhill
+  Exclude:
+  - Mountaintop
+  - Crater
+  GlobalPos: -238.69 493.7
+- ID: 637
+  Category: Night_Horde
+  Name: Stormhill North of Tunnel Entrance
+  Exclude:
+  - Mountaintop
+  - Crater
+  GlobalPos: -255.64 256.26
+- ID: 638
+  Category: Night_Horde
+  Name: Beneath Saintsbridge
+  Exclude:
+  - Mountaintop
+  - Crater
+  GlobalPos: -41.22 387.42
+- ID: 639
+  Category: Night_Horde
+  Name: Behind Ruins East of Lake
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 143.38 -380.4
+- ID: 640
+  Category: Night_Horde
+  Name: Tower Northeast of Lake
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 70.28 -295.98
+- ID: 641
+  Category: Night_Horde
+  Name: Southeast of Lake
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 81.03 -504.19
+- ID: 642
+  Category: Night_Horde
+  Name: Castle, Unknown Attach Point 1
+  Invalid: true
+  GlobalPos: 45.36 -142.15
+- ID: 643
+  Category: Night_Horde
+  Name: Castle, Unknown Attach Point 2
+  Invalid: true
+  GlobalPos: 140.25 -88.72
+- ID: 644
+  Category: Night_Horde
+  Name: Castle, Unknown Attach Point 3
+  Invalid: true
+  GlobalPos: 215.25 -24.190002
+- ID: 645
+  Category: Night_Horde
+  Name: Beneath Murkwater Ruins Bridge
+  Exclude:
+  - Crater
+  GlobalPos: 26.989998 112.97
+- ID: 646
+  Category: Night_Horde
+  Name: Northeast of Castle Front
+  Exclude:
+  - Crater
+  GlobalPos: 69.009995 18.57
+- ID: 647
+  Category: Night_Horde
+  Name: Above Northeast Tunnel Entrance
+  Exclude:
+  - Crater
+  GlobalPos: 141.31 235.03
+- ID: 648
+  Category: Night_Horde
+  Name: Southeast of Saintsbridge
+  Exclude:
+  - Crater
+  GlobalPos: 42.510002 285.58002
+- ID: 649
+  Category: Night_Horde
+  Name: West of Summonwater
+  Exclude:
+  - Crater
+  GlobalPos: 213.68 403.94
+- ID: 650
+  Category: Night_Horde
+  Name: Cliffside Northeast of Saintsbridge
+  Exclude:
+  - Crater
+  GlobalPos: 158.98 465.91998
+- ID: 651
+  Category: Night_Horde
+  Name: South of Minor Erdtree
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 474.27 -271
+- ID: 652
+  Category: Night_Horde
+  Name: Far Southeast Shore
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 381.67 -452.37
+- ID: 653
+  Category: Night_Horde
+  Name: Southeast Tunnel Entrance
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 270.25 -383.3
+- ID: 654
+  Category: Night_Horde
+  Name: West Mistwood
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 301.72 -177.75
+- ID: 655
+  Category: Night_Horde
+  Name: North of Minor Erdtree
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 476.66998 -83.729996
+- ID: 656
+  Category: Night_Horde
+  Name: South of Mistwood Evergaol
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 435.3 -37.699997
+- ID: 657
+  Category: Night_Horde
+  Name: Below Summonwater Hawk
+  GlobalPos: 338.2 227.06
+- ID: 658
+  Category: Night_Horde
+  Name: Third Church Southeast Cliffside
+  GlobalPos: 496.6 176.65
+- ID: 659
+  Category: Night_Horde
+  Name: Mistwood Outskirts
+  GlobalPos: 343.31 53.370003
+- ID: 660
+  Category: Night_Horde
+  Name: Southwest of Summonwater
+  GlobalPos: 294.54 362.07
+- ID: 661
+  Category: Night_Horde
+  Name: South of Summonwater
+  GlobalPos: 385.06 341.99
+- ID: 662
+  Category: Night_Horde
+  Name: Hill Northwest of Summonwater
+  GlobalPos: 279.33002 491.68
+- ID: 710
+  Category: Event
+  Name: Scale-Bearing Merchant, Southwest Corner
+  Exclude:
+  - Noklateo
+  GlobalPos: -327.415 -312.57
+- ID: 711
+  Category: Event
+  Name: Scale-Bearing Merchant, Northwest Corner
+  Exclude:
+  - Mountaintop
+  GlobalPos: -334.048 339.737
+- ID: 712
+  Category: Event
+  Name: Scale-Bearing Merchant, South of Castle
+  Exclude:
+  - Noklateo
+  GlobalPos: -178.232 -239.543
+- ID: 713
+  Category: Event
+  Name: Scale-Bearing Merchant, Ruins North of Castle
+  Exclude:
+  - Mountaintop
+  - Crater
+  GlobalPos: -136.949 104.518
+- ID: 715
+  Category: Event
+  Name: Scale-Bearing Merchant, Southeast Lakeshore
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 62.169 -410.795
+- ID: 716
+  Category: Event
+  Name: Scale-Bearing Merchant, Castle Front
+  Exclude:
+  - Rotted_Woods
+  - Noklateo
+  GlobalPos: 27.919998 -131.66
+- ID: 717
+  Category: Event
+  Name: Scale-Bearing Merchant, East of Saintsbridge
+  Exclude:
+  - Crater
+  GlobalPos: 8 416.965
+- ID: 718
+  Category: Event
+  Name: Scale-Bearing Merchant, Northeast Corner
+  GlobalPos: 428.29102 361.979
+- ID: 750
+  Category: Field_Boss
+  Name: Far Southwest of Lake
+  Exclude:
+  - Noklateo
+  GlobalPos: -290.72 -495.43
+- ID: 753
+  Category: Field_Boss
+  Name: North of Stormhill Tunnel Entrance
+  Exclude:
+  - Mountaintop
+  GlobalPos: -289.75 193.8
+- ID: 754
+  Category: Field_Boss
+  Name: Northwest Stormhill Cliffside
+  Exclude:
+  - Mountaintop
+  GlobalPos: -314.14 474.74
+- ID: 755
+  Category: Field_Boss
+  Name: Lake
+  Exclude:
+  - Noklateo
+  GlobalPos: -102.97 -329.41998
+- ID: 756
+  Category: Field_Boss
+  Name: Castle Rooftop
+  Exclude:
+  - Noklateo
+  GlobalPos: -90.43 -65.31
+- ID: 757
+  Category: Arena_Boss
+  Name: Castle Basement
+  Exclude:
+  - Noklateo
+  GlobalPos: -90.43 -65.31
+- ID: 758
+  Category: Field_Boss
+  Name: Stormhill Spectral Hawk
+  Exclude:
+  - Mountaintop
+  - Crater
+  GlobalPos: -252.81 403.15
+- ID: 759
+  Category: Field_Boss
+  Name: North of Murkwater Terminus
+  Exclude:
+  - Mountaintop
+  - Crater
+  GlobalPos: -43.14 216.75
+- ID: 760
+  Category: Field_Boss
+  Name: East of Murkwater Terminus
+  Exclude:
+  - Crater
+  GlobalPos: 78.46 183.63
+- ID: 761
+  Category: Field_Boss
+  Name: Northwest of Summonwater
+  Exclude:
+  - Crater
+  GlobalPos: 207.16 434.83002
+- ID: 762
+  Category: Field_Boss
+  Name: Mistwood Spectral Hawk
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 281.07 -430.38
+- ID: 763
+  Category: Field_Boss
+  Name: North Mistwood
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 406.18 -10.309998
+- ID: 800
+  Category: Extra_Night_Boss
+  Name: Southwest Corner
+  ParentID: 500
+  Exclude:
+  - Noklateo
+  GlobalPos: -358 -388
+- ID: 801
+  Category: Extra_Night_Boss
+  Name: West Stormhill Graveyard
+  ParentID: 502
+  Exclude:
+  - Mountaintop
+  GlobalPos: -438 149
+- ID: 802
+  Category: Extra_Night_Boss
+  Name: South Lake
+  ParentID: 503
+  Exclude:
+  - Noklateo
+  GlobalPos: -40 -413
+- ID: 803
+  Category: Extra_Night_Boss
+  Name: Northwest Lake
+  ParentID: 504
+  Exclude:
+  - Noklateo
+  GlobalPos: -203 -296
+- ID: 804
+  Category: Extra_Night_Boss
+  Name: South of Castle
+  ParentID: 505
+  Exclude:
+  - Noklateo
+  GlobalPos: -111 -186
+- ID: 805
+  Category: Extra_Night_Boss
+  Name: Northwest of Castle
+  ParentID: 506
+  Exclude:
+  - Mountaintop
+  - Crater
+  GlobalPos: -212 66
+- ID: 806
+  Category: Extra_Night_Boss
+  Name: Northeast of Lake
+  ParentID: 507
+  Exclude:
+  - Rotted_Woods
+  - Noklateo
+  GlobalPos: 75 -64
+- ID: 807
+  Category: Extra_Night_Boss
+  Name: East of Saintsbridge
+  ParentID: 509
+  Exclude:
+  - Crater
+  GlobalPos: 94 362
+- ID: 808
+  Category: Extra_Night_Boss
+  Name: Northeast Corner
+  ParentID: 511
+  GlobalPos: 448 425
+- ID: 809
+  Category: Extra_Night_Boss
+  Name: Southwest Mistwood
+  ParentID: 512
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 298 -295
+- ID: 810
+  Category: Extra_Night_Boss
+  Name: Northwest Mistwood Pond
+  ParentID: 513
+  Exclude:
+  - Rotted_Woods
+  GlobalPos: 293.53 -31.669998
+- ID: 811
+  Category: Extra_Night_Boss
+  Name: Southeast Rotted Woods
+  ParentID: 514
+  Require: Rotted_Woods
+  GlobalPos: 176.9 -292.65
+- ID: 812
+  Category: Extra_Night_Boss
+  Name: Northwest Rotted Woods
+  ParentID: 515
+  Require: Rotted_Woods
+  GlobalPos: 353.47 -74.130005
+- ID: 813
+  Category: Extra_Night_Boss
+  Name: Southeast Mountaintop
+  ParentID: 516
+  Require: Mountaintop
+  GlobalPos: -154.54001 163.82
+- ID: 814
+  Category: Extra_Night_Boss
+  Name: North of Crater
+  ParentID: 517
+  Require: Crater
+  GlobalPos: -39.010002 480.707
+- ID: 815
+  Category: Extra_Night_Boss
+  Name: Northwest Corner
+  ParentID: 518
+  Exclude:
+  - Mountaintop
+  GlobalPos: -438.12 445.66
+- ID: 817
+  Category: Extra_Night_Boss
+  Name: Noklateo Entrance
+  ParentID: 510
+  Require: Noklateo
+  GlobalPos: -91.619995 -86.68
+StartingPointData:
+- ID: 10423600
+  Name: Far Southwest from Northwest
+  Exclude:
+  - Noklateo
+- ID: 10423601
+  Name: Far Southwest from South
+  Exclude:
+  - Noklateo
+- ID: 10423800
+  Name: Stormhill South of Gate from Northwest
+  Exclude:
+  - Noklateo
+- ID: 10423801
+  Name: Stormhill South of Gate from South
+  Exclude:
+  - Noklateo
+- ID: 10423803
+  Name: West of Warmaster's Shack from West
+  Exclude:
+  - Mountaintop
+- ID: 10423805
+  Name: West of Warmaster's Shack from South
+  Exclude:
+  - Mountaintop
+- ID: 10423900
+  Name: Above Stormhill Tunnel Entrance from Northwest
+  Exclude:
+  - Mountaintop
+  - Crater
+- ID: 10423902
+  Name: Above Stormhill Tunnel Entrance from East
+  Exclude:
+  - Mountaintop
+  - Crater
+- ID: 10423911
+  Name: Above Stormhill Tunnel Entrance from West
+  Exclude:
+  - Mountaintop
+  - Crater
+- ID: 10443700
+  Name: Southeast of Lake from South
+  Exclude:
+  - Rotted_Woods
+- ID: 10443701
+  Name: Southeast of Lake from Southwest
+  Exclude:
+  - Rotted_Woods
+- ID: 10443703
+  Name: East of Cavalry Bridge from Southeast
+  Exclude:
+  - Rotted_Woods
+- ID: 10443704
+  Name: East of Cavalry Bridge from North
+  Exclude:
+  - Rotted_Woods
+- ID: 10443705
+  Name: East of Cavalry Bridge from West
+  Exclude:
+  - Rotted_Woods
+- ID: 10443711
+  Name: Southeast of Lake from East
+  Exclude:
+  - Rotted_Woods
+- ID: 10443900
+  Name: Northeast of Saintsbridge from Northwest
+  Exclude:
+  - Crater
+- ID: 10443902
+  Name: Northeast of Saintsbridge from Northeast
+  Exclude:
+  - Crater
+- ID: 10453600
+  Name: Minor Erdtree from Northeast
+  Exclude:
+  - Rotted_Woods
+- ID: 10453801
+  Name: Below Summonwater Hawk from Southeast
+- ID: 10453900
+  Name: Below Summonwater Hawk from West
