@@ -14,15 +14,20 @@ namespace SoulsIds
 {
     public class ModRunner
     {
+        // Shared
         private Process currentProcess;
         private readonly FromGame game;
-        private readonly string optName;
         private readonly string processName;
         private readonly string modengineConfig;
+        private readonly bool me3;
+        // Modengine2
+        private readonly string optName;
         private readonly string modengineLauncher;
         private readonly string modengineDllConfig;
+        // Modengine3
+        private readonly string supportsGame;
 
-        public ModRunner(FromGame game, string modengineConfig, string modengineLauncher, string modengineDllConfig = null)
+        public ModRunner(FromGame game, string modengineConfig, string modengineLauncher = null, string modengineDllConfig = null)
         {
             this.game = game;
             if (game == FromGame.ER)
@@ -40,10 +45,23 @@ namespace SoulsIds
                 optName = "dsr";
                 processName = "DarkSoulsRemastered";
             }
+            else if (game == FromGame.NR)
+            {
+                supportsGame = "nightreign";
+                processName = "nightreign";
+                me3 = true;
+            }
             else throw new ArgumentException($"Unsupported game {game}");
             this.modengineConfig = modengineConfig;
-            this.modengineLauncher = modengineLauncher;
             this.modengineDllConfig = modengineDllConfig;
+            if (!me3)
+            {
+                if (modengineLauncher == null)
+                {
+                    throw new ArgumentException($"Launcher path required for {game}");
+                }
+                this.modengineLauncher = modengineLauncher;
+            }
         }
 
         public event EventHandler StartRunning;
@@ -83,16 +101,47 @@ namespace SoulsIds
             }
         }
 
-        private static string FormatModLine(string name, string path)
+        private string FormatModEngineLine(string name, string path, string prev = null)
         {
-            return $"    {{ enabled = true, name = \"{name}\", path = {JsonConvert.ToString(path)} }},";
+            if (me3)
+            {
+                string extra = "";
+                if (prev != null)
+                {
+                    extra = $"load_before = [ {{\"id\" = \"{prev}\", \"optional\" = false}} ]{Environment.NewLine}";
+                }
+                return $"[[packages]]{Environment.NewLine}id = \"{name}\"{Environment.NewLine}path = '''{path}'''{Environment.NewLine}{extra}{Environment.NewLine}";
+            }
+            else
+            {
+                return $"    {{ enabled = true, name = \"{name}\", path = {JsonConvert.ToString(path)} }},";
+            }
+        }
+
+        private string FormatDllLine(string path)
+        {
+            if (me3)
+            {
+                string extra = "";
+                if (Path.GetFileName(path).Equals("NightreignRandomizerHelper.dll", StringComparison.OrdinalIgnoreCase))
+                {
+                    extra = $"# Needed for fmg hook{Environment.NewLine}load_before = [ {{\"id\" = \"nrsc.dll\", \"optional\" = true}} ]{Environment.NewLine}";
+                }
+                return $"[[natives]]{Environment.NewLine}path = '''{path}'''{Environment.NewLine}{extra}{Environment.NewLine}";
+            }
+            else
+            {
+                return $"    {JsonConvert.ToString(path)},";
+            }
         }
 
         public void CreateLaunchFile(List<string> commentLines, MergedMods mods = null, List<string> extraDlls = null)
         {
             List<string> modLines = new List<string>();
             List<string> dllLines = new List<string>();
-            modLines.Add(FormatModLine("randomizer", Directory.GetCurrentDirectory()));
+            string mainMod = "randomizer";
+            modLines.Add(FormatModEngineLine(mainMod, Directory.GetCurrentDirectory()));
+            string prevMod = mainMod;
             if (extraDlls != null)
             {
                 foreach (string path in extraDlls)
@@ -100,30 +149,53 @@ namespace SoulsIds
                     FileInfo modInfo = new FileInfo(path);
                     if (modInfo.Exists)
                     {
-                        dllLines.Add($"    {JsonConvert.ToString(modInfo.FullName)},");
+                        dllLines.Add(FormatDllLine(modInfo.FullName));
                     }
                 }
             }
             if (mods != null)
             {
+                int modNum = 1;
                 foreach (string modDir in mods.Dirs)
                 {
                     DirectoryInfo modInfo = new DirectoryInfo(modDir);
                     if (modInfo.Exists)
                     {
-                        modLines.Add(FormatModLine("mod", modInfo.FullName));
+                        string modName = $"mod{modNum++}";
+                        modLines.Add(FormatModEngineLine(modName, modInfo.FullName, prevMod));
+                        prevMod = modName;
                     }
                 }
+                // TODO this doesn't really work for me3
                 foreach (string path in mods.ExternalDlls)
                 {
                     FileInfo modInfo = new FileInfo(path);
                     if (modInfo.Exists)
                     {
-                        dllLines.Add($"    {JsonConvert.ToString(modInfo.FullName)},");
+                        dllLines.Add(FormatDllLine(modInfo.FullName));
                     }
                 }
             }
-            string file = $@"# DO NOT MODIFY THIS FILE!
+            string file;
+            if (me3)
+            {
+                file = $@"# WARNING: THIS FILE IS AUTOGENERATED
+# CONTENTS WILL BE AUTOMATICALLY OVERWRITTEN
+
+{string.Join("", commentLines.Select(line => $"# {line}{Environment.NewLine}"))}
+
+profileVersion = ""v1""
+
+{string.Join("", dllLines)}
+{string.Join("", modLines)}
+
+[[supports]]
+game = ""{supportsGame}""
+";
+            }
+            else
+            {
+                file = $@"# DO NOT MODIFY THIS FILE!
 # AUTO-GENERATED
 # CONTENTS WILL BE AUTOMATICALLY OVERWRITTEN
 
@@ -141,6 +213,7 @@ mods = [
 {string.Join(Environment.NewLine, modLines)}
 ]
 ";
+            }
             File.WriteAllText(modengineConfig, file);
         }
 
@@ -149,18 +222,19 @@ mods = [
             return File.ReadAllText(modengineConfig);
         }
 
+        // me2 only
         private string MakeLaunchFileForZip(MergedMods mods)
         {
             List<string> modLines = new List<string>();
             List<string> dllLines = new List<string>();
             DirectoryInfo currentDir = new DirectoryInfo(".");
-            modLines.Add(FormatModLine("randomizer", currentDir.Name));
+            modLines.Add(FormatModEngineLine("randomizer", currentDir.Name));
             if (mods != null)
             {
                 // Add relative paths directly
                 foreach (string modDir in mods.Dirs)
                 {
-                    modLines.Add(FormatModLine("mod", modDir));
+                    modLines.Add(FormatModEngineLine("mod", modDir));
                 }
                 foreach (string path in mods.ExternalDlls)
                 {
@@ -181,7 +255,7 @@ mods = [
 ";
         }
 
-        public bool IsValid() => File.Exists(modengineConfig) && File.Exists(modengineLauncher);
+        public bool IsValid() => File.Exists(modengineConfig) && (modengineLauncher == null || File.Exists(modengineLauncher));
 
         private bool? IsMaybeRunning()
         {
@@ -196,11 +270,12 @@ mods = [
         public bool IsGameRunning() => IsMaybeRunning() ?? false;
         public bool IsLaunching() => currentProcess != null;
 
+        // https://stackoverflow.com/questions/10174156/open-file-with-associated-application
         public async Task LaunchGame(List<string> extraDlls = null)
         {
             if (currentProcess != null) return;
             string launchFile = modengineConfig;
-            if (extraDlls != null && extraDlls.Count > 0 && File.Exists(modengineConfig))
+            if (!me3 && extraDlls != null && extraDlls.Count > 0 && File.Exists(modengineConfig))
             {
                 // In this case (DS1 for now), pass extraDlls into the launch file instead
                 // This flow is done on launch, to avoid rerunning randomizer for separate dll list
@@ -210,13 +285,23 @@ mods = [
             }
             using (Process process = new Process())
             {
-                process.StartInfo.FileName = modengineLauncher;
-                // TODO: Add ..s based on how many are present in the launcher
-                // TODO: Add game directory here? Escaping path names is a mess
-                process.StartInfo.Arguments = $@"-t {optName} -c ..\..\{launchFile}";
-                process.StartInfo.WorkingDirectory = Path.GetDirectoryName(modengineLauncher);
-                process.StartInfo.UseShellExecute = false;
-                process.EnableRaisingEvents = true;
+                if (me3)
+                {
+                    process.StartInfo.FileName = "explorer";
+                    process.StartInfo.Arguments = launchFile;
+                    // process.StartInfo.UseShellExecute = false;
+                    process.EnableRaisingEvents = true;
+                }
+                else
+                {
+                    process.StartInfo.FileName = modengineLauncher;
+                    // TODO: Add ..s based on how many are present in the launcher
+                    // TODO: Add game directory here? Escaping path names is a mess
+                    process.StartInfo.Arguments = $@"-t {optName} -c ..\..\{launchFile}";
+                    process.StartInfo.WorkingDirectory = Path.GetDirectoryName(modengineLauncher);
+                    process.StartInfo.UseShellExecute = false;
+                    process.EnableRaisingEvents = true;
+                }
 
                 // Start
                 currentProcess = process;

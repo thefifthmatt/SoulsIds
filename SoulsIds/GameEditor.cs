@@ -330,6 +330,11 @@ namespace SoulsIds
                     bnd4.Compression = dcx;
                     SFUtil.EncryptERRegulation(outPath, bnd4);
                 }
+                else if (Spec.Game == FromGame.NR && outPath.EndsWith("regulation.bin"))
+                {
+                    bnd4.Compression = dcx;
+                    SFUtil.EncryptNRRegulation(outPath, bnd4);
+                }
                 else
                 {
                     bnd4.Write(outPath, dcx);
@@ -465,6 +470,16 @@ namespace SoulsIds
             {
                 // Use first row in order
                 rows.TryAdd(r.ID, r);
+            }
+            return rows;
+        }
+
+        public static Dictionary<int, T> ParamToDictionary<T>(PARAM p, Func<PARAM.Row, T> convert)
+        {
+            Dictionary<int, T> rows = new Dictionary<int, T>(p.Rows.Count);
+            foreach (PARAM.Row r in p.Rows)
+            {
+                rows.TryAdd(r.ID, convert(r));
             }
             return rows;
         }
