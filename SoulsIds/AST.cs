@@ -1,9 +1,10 @@
-﻿using System;
-using System.Linq;
+﻿using SoulsFormats;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
-using SoulsFormats;
+using static SoulsFormats.FFXDLSE;
 
 namespace SoulsIds
 {
@@ -13,6 +14,63 @@ namespace SoulsIds
         public enum FalseCond
         {
             NONE, CONTINUE, ABORT
+        }
+
+        /// <summary>A disassembled comamnd invocation.</summary>
+        public class Command
+        {
+            /// <summary>The name of the command to invoke.</summary>
+            public String Name { get; set; }
+
+            /// <summary>The arguments to pass to this command.</summary>
+            public List<AST.Expr> Arguments { get; set; } = new();
+
+            /// <summary>
+            /// Disassembles a bytecode <paramref name="call"/> into a <see cref="Command"/>.
+            /// </summary>
+            public static Command Disassemble(ESD.CommandCall call, ESDDocumentation doc = null)
+            {
+                return new Command()
+                {
+                    Name = doc?.Commands.TryGetValue(
+                        (call.CommandBank, call.CommandID),
+                        out var cmdDoc
+                    ) ?? false
+                        ? cmdDoc.Name
+                        : $"C{call.CommandBank}_{call.CommandID}",
+                    Arguments = call.Arguments
+                        .Select(bytes => AST.DisassembleExpression(bytes, doc))
+                        .ToList(),
+                };
+            }
+
+            /// <summary>Converts this to an assembled <see cref="ESD.CommandCall"/>.</summary>
+            public ESD.CommandCall Assemble(ESDDocumentation doc = null)
+            {
+                int bank;
+                int id;
+                if (doc?.CommandsByName.TryGetValue(Name, out var cmdDoc) ?? false)
+                {
+                    bank = cmdDoc.Bank;
+                    id = cmdDoc.ID;
+                }
+                else
+                {
+                    var results = Name[1..].Split('_').Select(int.Parse).ToList();
+                    bank = results[0];
+                    id = results[1];
+                }
+
+                return new ESD.CommandCall()
+                {
+                    CommandBank = bank,
+                    CommandID = id,
+                    Arguments = Arguments.Select(arg => AST.AssembleExpression(arg, doc)).ToList(),
+                };
+            }
+
+            public override string ToString() =>
+                Name + "(" + String.Join(", ", Arguments) + ")";
         }
 
         public abstract class Expr
@@ -137,6 +195,10 @@ namespace SoulsIds
                 if (newExpr != null) expr = newExpr;
                 return expr;
             }
+
+            public static bool operator ==(Expr left, Expr right) =>
+                left is null ? right is null : left.Equals(right);
+            public static bool operator !=(Expr left, Expr right) => !(left == right);
         }
 
         public class ConstExpr : Expr
@@ -158,9 +220,11 @@ namespace SoulsIds
                 o = 0;
                 return false;
             }
-            public override int GetHashCode() => Value.GetType().GetHashCode() ^ Value.ToString().GetHashCode();
+            public override int GetHashCode() => TryAsInt(out var i) ? i.GetHashCode() : Value.GetHashCode();
             public override bool Equals(object obj) => obj is ConstExpr o && Equals(o);
-            public bool Equals(ConstExpr o) => Value.Equals(o.Value);
+            public bool Equals(ConstExpr o) => TryAsInt(out var i1) && o.TryAsInt(out var i2)
+                ? i1 == i2
+                : Value.Equals(o.Value);
         }
 
         public class FunctionCall : Expr
@@ -173,6 +237,17 @@ namespace SoulsIds
             // StateGroupArg[<index>] (with brackets instead of parens for fun)
             public string Name { get; set; }
             public List<Expr> Args { get; set; }
+            public override int GetHashCode() {
+                var hc = new HashCode();
+                hc.Add(Name);
+                foreach (var arg in Args)
+                {
+                    hc.Add(arg);
+                }
+                return hc.ToHashCode();
+            }
+            public override bool Equals(object obj) => obj is FunctionCall o && Equals(o);
+            public bool Equals(FunctionCall o) => Name == o.Name && Args.SequenceEqual(o.Args);
         }
 
         public class BinaryExpr : Expr
@@ -181,6 +256,10 @@ namespace SoulsIds
             public string Op { get; set; }
             public Expr Lhs { get; set; }
             public Expr Rhs { get; set; }
+            public override int GetHashCode() => HashCode.Combine(Op, Lhs, Rhs);
+            public override bool Equals(object obj) => obj is BinaryExpr o && Equals(o);
+            public bool Equals(BinaryExpr o) =>
+                Op == o.Op && Lhs.Equals(o.Lhs) && Rhs.Equals(o.Rhs);
         }
 
         public class UnaryExpr : Expr
@@ -188,15 +267,28 @@ namespace SoulsIds
             // Supported ops: N
             public string Op { get; set; }
             public Expr Arg { get; set; }
+            public override int GetHashCode() => HashCode.Combine(Op, Arg);
+            public override bool Equals(object obj) => obj is UnaryExpr o && Equals(o);
+            public bool Equals(UnaryExpr o) => Op == o.Op && Arg.Equals(o.Arg);
         }
 
-        public class CallResult : Expr { }
+        public class CallResult : Expr {
+            public override int GetHashCode() => 0xB9.GetHashCode();
+            public override bool Equals(object obj) => obj is CallResult;
+        }
 
-        public class CallOngoing : Expr { }
+        public class CallOngoing : Expr
+        {
+            public override int GetHashCode() => 0xBA.GetHashCode();
+            public override bool Equals(object obj) => obj is CallOngoing;
+        }
 
         public class Unknown : Expr
         {
             public byte Opcode { get; set; }
+            public override int GetHashCode() => Opcode.GetHashCode();
+            public override bool Equals(object obj) => obj is Unknown o && Equals(o);
+            public bool Equals(Unknown o) => Opcode == o.Opcode;
         }
 
         public class AstVisitor
@@ -217,7 +309,7 @@ namespace SoulsIds
             public Func<Expr, Expr, Expr> PostvisitParent { get; set; }
         }
 
-        public static Expr DisassembleExpression(byte[] Bytes)
+        public static Expr DisassembleExpression(byte[] Bytes, ESDDocumentation doc = null)
         {
             bool IsBigEndian = false;
             byte[] bigEndianReverseBytes = IsBigEndian ? Bytes.Reverse().ToArray() : null;
@@ -235,7 +327,14 @@ namespace SoulsIds
             }
             string GetFunctionInfo(int id)
             {
-                return $"f{id}";
+                if (doc?.Functions.TryGetValue(id, out var func) ?? false)
+                {
+                    return func.Name;
+                }
+                else
+                {
+                    return $"f{id}";
+                }
             }
 
             for (int i = 0; i < Bytes.Length; i++)
@@ -395,7 +494,7 @@ namespace SoulsIds
             return exprs.Pop();
         }
 
-        public static byte[] AssembleExpression(Expr topExpr)
+        public static byte[] AssembleExpression(Expr topExpr, ESDDocumentation doc = null)
         {
             using (MemoryStream ms = new MemoryStream())
             using (BinaryWriter bw = new BinaryWriter(ms, Encoding.Unicode))
@@ -467,7 +566,10 @@ namespace SoulsIds
                         else
                         {
                             // In ESDLang, this is context.GetFunctionID(name)
-                            int id = int.Parse(name.Substring(1));
+                            int id =
+                                doc?.FunctionsByName.TryGetValue(name, out var funcDoc) ?? false
+                                    ? funcDoc.ID
+                                    : int.Parse(name.Substring(1));
                             if (id >= -64 && id <= 63)
                             {
                                 bw.Write((byte)(id + 64));
