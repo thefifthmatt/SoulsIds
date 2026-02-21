@@ -65,7 +65,7 @@ namespace SoulsIds
             public Namespace Type { get; set; }
             public int RangeEnd { get; set; }
 
-            public override string ToString() => $"{Type.ToString().ToLower()}:{ID}" + (RangeEnd == -1 ? "" : $":{RangeEnd}");
+            public override string ToString() => $"{Type.ToString().ToLowerInvariant()}:{ID}" + (RangeEnd == -1 ? "" : $":{RangeEnd}");
             public override bool Equals(object obj) => obj is Obj o && Equals(o);
             public bool Equals(Obj o) => Type == o.Type && ID.Equals(o.ID) && RangeEnd == o.RangeEnd;
             public override int GetHashCode() => ((int)Type) << 24 ^ ID.GetHashCode() ^ RangeEnd;

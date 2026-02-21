@@ -2175,9 +2175,9 @@ namespace SoulsIds
                 {
                     continue;
                 }
-                else if (Acronyms.Contains(words[i].ToUpper()))
+                else if (Acronyms.Contains(words[i].ToUpperInvariant()))
                 {
-                    words[i] = words[i].ToUpper();
+                    words[i] = words[i].ToUpperInvariant();
                     continue;
                 }
                 else if (words[i] == "SpEffect")
@@ -2185,11 +2185,11 @@ namespace SoulsIds
                     continue;
                 }
 
-                char firstChar = char.ToUpper(words[i][0]);
+                char firstChar = char.ToUpperInvariant(words[i][0]);
                 string rest = "";
                 if (words[i].Length > 1)
                 {
-                    rest = words[i].Substring(1).ToLower();
+                    rest = words[i].Substring(1).ToLowerInvariant();
                 }
                 words[i] = firstChar + rest;
             }
@@ -2201,7 +2201,7 @@ namespace SoulsIds
         {
             if (string.IsNullOrEmpty(s)) return s;
             string name = TitleCaseName(s);
-            char firstChar = char.ToLower(name[0]);
+            char firstChar = char.ToLowerInvariant(name[0]);
             if (name.Length > 1)
                 return firstChar + name.Substring(1);
             else
