@@ -52,7 +52,7 @@ namespace SoulsIds
                 }
                 catch (Exception e)
                 {
-                    throw new Exception($"Failed to load param {paramPath}: " + e);
+                    return null;
                 }
                 if (defs != null && defs.Count > 0)
                 {
@@ -64,7 +64,8 @@ namespace SoulsIds
                     }
                 }
                 return param;
-            });
+            // Needed for DS3 to not parse MenuParam.stayparam (works for other games too?)
+            }, ".param");
         }
 
         // Load params from a combination of game dir and param file in spec.
@@ -117,9 +118,15 @@ namespace SoulsIds
         public Dictionary<T, string> LoadNames<T>(string name, Func<string, T> key, bool allowMissing = false)
         {
             if (Spec.NameDir == null) throw new Exception("Name file dir not provided");
-            Dictionary<T, string> ret = new Dictionary<T, string>();
             string path = $@"{Spec.NameDir}\{name}.txt";
             if (allowMissing && !File.Exists(path)) return new Dictionary<T, string>();
+            return LoadNamesRel(path, key);
+        }
+
+        // Load names in path related to current dir
+        public Dictionary<T, string> LoadNamesRel<T>(string path, Func<string, T> key)
+        {
+            Dictionary<T, string> ret = new Dictionary<T, string>();
             foreach (var line in File.ReadLines(path))
             {
                 if (line.StartsWith("#")) continue;

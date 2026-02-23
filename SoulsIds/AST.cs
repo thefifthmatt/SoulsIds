@@ -92,7 +92,7 @@ namespace SoulsIds
                 return s;
             }
 
-            private static readonly HashSet<string> eqs = new HashSet<string> { "==", "!=", "<=", ">=", ">", "<" };
+            private static readonly HashSet<string> eqs = new HashSet<string> { "==", "!=", "#<=", "#>=", "#>", "#<" };
             private static readonly Dictionary<string, int> commutes = new Dictionary<string, int>
             {
                 ["+"] = 0,
@@ -528,10 +528,15 @@ namespace SoulsIds
             [0x8E] = "-",
             [0x8F] = "*",
             [0x90] = "/",
-            [0x91] = "<=",
-            [0x92] = ">=",
-            [0x93] = "<",
-            [0x94] = ">",
+            // [0x91] = "<=",
+            // [0x92] = ">=",
+            // [0x93] = "<",
+            // [0x94] = ">",
+            // Temporary alt names during switch
+            [0x91] = "#<",
+            [0x92] = "#>",
+            [0x93] = "#<=",
+            [0x94] = "#>=",
             [0x95] = "==",
             [0x96] = "!=",
             [0x98] = "&&",

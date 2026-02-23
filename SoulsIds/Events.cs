@@ -2288,6 +2288,41 @@ namespace SoulsIds
             return (new EMEVD.Instruction(docId.Item1, docId.Item2, args), ps);
         }
 
+        public Instr ParseAddInstr(string add)
+        {
+            // This is duplicated from other command, but this one also does fancier parsing, so whatever, just keep them in sync.
+            (string cmd, List<string> addArgs) = ParseCommandString(add);
+            if (!docByName.TryGetValue(cmd, out (int, int) docId)) throw new Exception($"Unrecognized command '{cmd}' in {add}");
+            EMEDF.InstrDoc addDoc = doc[docId.Item1][docId.Item2];
+            // Inits not supported
+            List<ArgType> argTypes = addDoc.Arguments.Select(arg => arg.Type == 8 ? ArgType.UInt32 : (ArgType)arg.Type).ToList();
+            if (addArgs.Count != argTypes.Count) throw new Exception($"Expected {argTypes.Count} arguments for {cmd}, given {addArgs.Count} in {add}");
+            // Set Val, Doc, Types, ArgList, HasParams, Modified
+            Instr instr = new Instr()
+            {
+                Val = new EMEVD.Instruction(docId.Item1, docId.Item2),
+                Doc = addDoc,
+                Types = argTypes,
+                ArgList = new(),
+                Writeable = true,
+            };
+            List<object> args = new List<object>();
+            for (int i = 0; i < addArgs.Count; i++)
+            {
+                string arg = addArgs[i];
+                if (arg.StartsWith("X"))
+                {
+                    args.Add(arg);
+                }
+                else
+                {
+                    args.Add(ParseArgWithEnum(arg, argTypes[i]));
+                }
+            }
+            instr.AddArgs(args);
+            return instr;
+        }
+
         // Hybrid used internally, which can handle null or not
         private (EMEVD.Instruction, List<EMEVD.Parameter>) ParseAddOptArg(string add)
         {
@@ -2540,9 +2575,6 @@ namespace SoulsIds
             public override string ToString() => Caller == null ? $"[Event {Event}] {CallString()}" : $"{Caller.CallString()} - {CallString()}";
         }
 
-        public class EventDebug : EventAny<int, InstructionDebug> { }
-        public class InstructionDebug : InstructionAny<int> { }
-
         public SortedDictionary<EventKey, E> GetCommandHighlightedEvents<E, I, T>(
             Dictionary<string, EMEVD> emevds,
             // Given a non-init instruction, return instruction arg index + ids associated with it
@@ -2765,7 +2797,10 @@ namespace SoulsIds
             return eventInfos;
         }
 
-        // TODO: We can migrate this to use the generic version, in theory
+        // Simple int-based version, when no id overlaps exist
+        public class EventDebug : EventAny<int, InstructionDebug> { }
+        public class InstructionDebug : InstructionAny<int> { }
+
         public SortedDictionary<EventKey, EventDebug> GetHighlightedEvents(
             Dictionary<string, EMEVD> emevds,
             HashSet<int> ids,
@@ -2804,6 +2839,49 @@ namespace SoulsIds
                 return true;
             }
             return GetCommandHighlightedEvents<EventDebug, InstructionDebug, int>(
+                emevds, getInstrValues, getInitValues, highlightValue, alwaysHighlight);
+        }
+
+        // Simple example of EventValue-based configs. Further EventValue classification may be possible based on map data
+        public class ValueEventDebug : EventAny<EventValue, ValueInstructionDebug> { }
+        public class ValueInstructionDebug : InstructionAny<EventValue> { }
+
+        public SortedDictionary<EventKey, ValueEventDebug> GetHighlightedValueEvents(
+            Dictionary<string, EMEVD> emevds,
+            Predicate<EventValue> highlightValue,
+            Predicate<Instr> alwaysHighlight = null)
+        {
+            List<(int, EventValue)> getInstrValues(Instr instr)
+            {
+                Dictionary<int, EventValue> values = GetInstructionValues(instr);
+                return values == null ? new () : values.Select(e => (e.Key, e.Value)).ToList();
+            }
+            List<(int, EventValue)> getInitValues(Instr instr, ValueEventDebug info)
+            {
+                List<(int, EventValue)> ret = new List<(int, EventValue)>();
+                // This solely based on which parameters are referenced in the event itself
+                List<object> args = instr.Args.Skip(instr.Offset).ToList();
+                foreach (EventValue value in info.IDs)
+                {
+                    if (value.IsArg())
+                    {
+                        // This string is added by the event highlighter, formatted like X4_4
+                        // This assumes all arguments are ints/uints
+                        if (!ParseArgSpec(value.StrID, out int argPos))
+                        {
+                            throw new Exception($"Invalid string arg {value} in initialization {instr}");
+                        }
+                        if (argPos >= args.Count) throw new Exception($"Insufficient args provided to {info.Event} from {instr}");
+                        // Only use the first such instance
+                        if (ret.Any(v => v.Item1 == argPos)) continue;
+                        object obj = args[argPos];
+                        // Is it fine to add value here directly?
+                        ret.Add((argPos, new EventValue(value.Type, obj)));
+                    }
+                }
+                return ret;
+            }
+            return GetCommandHighlightedEvents<ValueEventDebug, ValueInstructionDebug, EventValue>(
                 emevds, getInstrValues, getInitValues, highlightValue, alwaysHighlight);
         }
 
@@ -2875,6 +2953,7 @@ namespace SoulsIds
                     }
                     else
                     {
+                        // TODO: Should this also check eligibleIDs? Or else why is above branch checking it?
                         spec.DebugInfo = info.IDs.Distinct().Select(id => quickId(id)).ToList();
                     }
                     spec.DebugInfo.RemoveAll(text => text == null);

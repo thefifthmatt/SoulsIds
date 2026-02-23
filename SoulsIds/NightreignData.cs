@@ -111,7 +111,7 @@ namespace SoulsIds
                         int cond = (int)row[$"{type}Modifier{dayNum}"].Value;
                         int attachId = j == 0 ? playArea.BossAttachID : playArea.ExtraBossAttachID;
                         SmallBaseKey baseKey = new SmallBaseKey(baseId, j);
-                        string name = "Unknown";
+                        string name = $"Unknown {baseId}";
                         // TODO: Validate this
                         if (SmallBases.TryGetValue(baseKey, out SmallBase smallBase))
                         {
@@ -160,7 +160,7 @@ namespace SoulsIds
                 byte mapIndex = (byte)row["mapIndex"].Value;
                 int mod = (int)row["modifier"].Value;
                 SmallBaseKey baseKey = new SmallBaseKey(baseId, variationId);
-                string name = "Unknown";
+                string name = $"Unknown {baseId}_{variationId}";
                 if (SmallBases.TryGetValue(baseKey, out SmallBase smallBase))
                 {
                     name = smallBase.FullName;
@@ -189,6 +189,7 @@ namespace SoulsIds
             Mountaintop = 11,
             Crater = 12,
             Rotted_Woods = 13,
+            Great_Hollow = 14,
             Noklateo = 15,
         }
         public static readonly Dictionary<RareMap, string> RareMapNames = EnumNames<RareMap>();
@@ -204,6 +205,8 @@ namespace SoulsIds
             Fulghor = 5,
             Caligo = 6,
             Heolstor = 7,
+            Harmonia = 8,
+            Straghess = 9,
         }
         public static readonly Dictionary<TargetBoss, string> TargetBossNames = EnumNames<TargetBoss>();
 
@@ -228,6 +231,27 @@ namespace SoulsIds
             Arena_Boss = 46_81,
             Night_Boss = 47_70,
             Castle = 49_41,
+            Marsh = 50_00,
+            Blacksmith_Village = 50_10,
+            DLC_South_Great_Church = 52_40,
+            DLC_East_Great_Church = 52_45,
+            DLC_West_Ruins = 52_50,
+            DLC_Southeast_Ruins = 52_55,
+            DLC_West_Fort_South_Sewers = 53_49, // 0
+            DLC_West_Fort_Courtyard = 53_50,
+            DLC_West_Fort_West_Sewers = 53_52, // 1
+            DLC_West_Fort_Library_Rampart = 53_54, // 2
+            DLC_West_Fort_Library = 53_55, // 3
+            DLC_West_Fort_West_Gate = 53_58, // 4
+            DLC_West_Fort_East_Sewers = 53_60, // 5
+            DLC_West_Fort_South_Gate = 53_62, // 6
+            DLC_East_Fort_Upper_Courtyard = 53_67,
+            DLC_East_Fort_Upper_Sewers = 53_70, // 8
+            DLC_East_Fort_Grand_Stairway = 53_80, // 9
+            DLC_East_Fort_Lower_Courtyard = 53_81, // 10
+            DLC_East_Fort_Lower_Armory = 53_86, // 11
+            DLC_East_Fort_Lower_Sewers = 53_87, // 12
+            DLC_Merchant = 53_99,
             None = 10000,
             TODO = 10001,
         }
@@ -252,6 +276,9 @@ namespace SoulsIds
             Field_Boss = 750,
             Arena_Boss = 757,
             Extra_Night_Boss = 800,
+            DLC_Base = 1109,
+            DLC_Merchant = 1210,
+            Temple = 1114,
             None = 10000,
             TODO = 10001,
         }
@@ -535,7 +562,7 @@ namespace SoulsIds
 
         public static readonly IReadOnlyCollection<RareMap> All = new List<RareMap>()
         {
-            RareMap.Default, RareMap.Mountaintop, RareMap.Crater, RareMap.Rotted_Woods, RareMap.Noklateo
+            RareMap.Default, RareMap.Mountaintop, RareMap.Crater, RareMap.Rotted_Woods, RareMap.Great_Hollow, RareMap.Noklateo
         }.AsReadOnly();
     }
 

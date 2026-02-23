@@ -19,12 +19,13 @@ namespace SoulsIds
             Other = other;
         }
 
+        // TODO: Use FmgData
         public static FMGX DLC(Dictionary<string, FMG> fmgs, string key)
         {
-            string mainKey = $"{key}_dlc01";
-            if (fmgs.ContainsKey(mainKey))
+            string otherKey = $"{key}_dlc01";
+            if (fmgs.ContainsKey(otherKey))
             {
-                return new FMGX(fmgs[mainKey], fmgs[key]);
+                return new FMGX(fmgs[key], fmgs[otherKey]);
             }
             else
             {
@@ -34,10 +35,10 @@ namespace SoulsIds
 
         public static FMGX DLC(FMGDictionary fmgs, string key)
         {
-            string mainKey = $"{key}_dlc01";
-            if (fmgs.ContainsKey(mainKey))
+            string otherKey = $"{key}_dlc01";
+            if (fmgs.ContainsKey(otherKey))
             {
-                return new FMGX(fmgs.Get(mainKey), fmgs.Get(key));
+                return new FMGX(fmgs.Get(key), fmgs.Get(otherKey));
             }
             else
             {

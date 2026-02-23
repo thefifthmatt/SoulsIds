@@ -13,15 +13,28 @@ namespace SoulsIds
 {
     public class BhdExtractor
     {
-        public static Dictionary<string, byte[]> ReadBdtFiles(string gameDir, Dictionary<string, string> pathArchives)
+        public static Dictionary<string, byte[]> ReadBdtFiles(GameSpec.FromGame game, string gameDir, Dictionary<string, string> pathArchives)
         {
             Dictionary<string, byte[]> ret = new Dictionary<string, byte[]>();
             List<string> archives = pathArchives.Select(e => e.Value).Distinct().ToList();
             bool debugOrigin = false;
+            Dictionary<string, string> keys;
+            BHD5.Game bhdGame;
+            if (game == GameSpec.FromGame.ER)
+            {
+                keys = EldenKeys;
+                bhdGame = BHD5.Game.EldenRing;
+            }
+            else if (game == GameSpec.FromGame.DS3)
+            {
+                keys = DS3Keys;
+                bhdGame = BHD5.Game.DarkSouls3;
+            }
+            else throw new Exception($"Unsupported {game}");
             if (archives.Any(p => p == null))
             {
 #if DEBUG
-                archives = EldenKeys.Keys.ToList();
+                archives = keys.Keys.ToList();
                 debugOrigin = true;
 #endif
                 if (!debugOrigin)
@@ -29,7 +42,7 @@ namespace SoulsIds
                     throw new Exception($"Internal error: No archive info for {string.Join(", ", pathArchives.Where(e => e.Value == null).Select(e => e.Key))}");
                 }
             }
-            Dictionary<ulong, string> tryFind = pathArchives.Keys.ToDictionary(t => ComputeHash(t), t => t);
+            Dictionary<ulong, string> tryFind = pathArchives.Keys.ToDictionary(t => ComputeHash(t, game == GameSpec.FromGame.ER), t => t);
             foreach (string archive in archives)
             {
                 string bhdPath = Path.Combine(gameDir, $"{archive}.bhd");
@@ -38,9 +51,9 @@ namespace SoulsIds
                 if (!File.Exists(bdtPath)) throw new Exception($"Game data file not found: {bdtPath}");
 
                 BHD5 bhd;
-                using (MemoryStream bhdStream = DecryptRsa(bhdPath, EldenKeys[archive]))
+                using (MemoryStream bhdStream = DecryptRsa(bhdPath, keys[archive]))
                 {
-                    bhd = BHD5.Read(bhdStream, BHD5.Game.EldenRing);
+                    bhd = BHD5.Read(bhdStream, bhdGame);
                 }
                 using (FileStream bdtStream = File.OpenRead(bdtPath))
                 {
@@ -69,7 +82,20 @@ namespace SoulsIds
             return ret;
         }
 
-        private static Dictionary<string, string> EldenKeys = new Dictionary<string, string>
+        private static Dictionary<string, string> DS3Keys = new()
+        {
+            ["Data1"] =
+@"-----BEGIN RSA PUBLIC KEY-----
+MIIBCwKCAQEA05hqyboW/qZaJ3GBIABFVt1X1aa0/sKINklvpkTRC+5Ytbxvp18L
+M1gN6gjTgSJiPUgdlaMbptVa66MzvilEk60aHyVVEhtFWy+HzUZ3xRQm6r/2qsK3
+8wXndgEU5JIT2jrBXZcZfYDCkUkjsGVkYqjBNKfp+c5jlnNwbieUihWTSEO+DA8n
+aaCCzZD3e7rKhDQyLCkpdsGmuqBvl02Ou7QeehbPPno78mOYs2XkP6NGqbFFGQwa
+swyyyXlQ23N15ZaFGRRR0xYjrX4LSe6OJ8Mx/Zkec0o7L28CgwCTmcD2wO8TEATE
+AUbbV+1Su9uq2+wQxgnsAp+xzhn9og9hmwIEC35bSQ==
+-----END RSA PUBLIC KEY-----",
+        };
+
+        private static Dictionary<string, string> EldenKeys = new()
         {
             ["Data0"] =
 @"-----BEGIN RSA PUBLIC KEY-----
@@ -118,14 +144,23 @@ O1FnLm8i4zOxVdPHQBKICkKcGS1o3C2dfwIEXw/f3w==
 -----END RSA PUBLIC KEY-----",
         };
 
-        // Thank you UXM
-        private const ulong PRIME = 0x85; // 0x25 previous, now 0x85
-        private static ulong ComputeHash(string path)
+        private const uint PRIME = 0x25;
+        private const ulong ELDEN_PRIME = 0x85; // 0x25 previous, now 0x85
+        private static ulong ComputeHash(string path, bool elden)
         {
             string hashable = path.Trim().Replace('\\', '/').ToLowerInvariant();
             if (!hashable.StartsWith("/"))
+            {
                 hashable = '/' + hashable;
-            return hashable.Aggregate(0ul, (i, c) => i * PRIME + c);
+            }
+            if (elden)
+            {
+                return hashable.Aggregate(0ul, (i, c) => i * ELDEN_PRIME + c);
+            }
+            else
+            {
+                return hashable.Aggregate((uint)0, (i, c) => i * PRIME + c);
+            }
         }
 
         private static MemoryStream DecryptRsa(string filePath, string key)

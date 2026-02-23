@@ -7,6 +7,7 @@ namespace SoulsIds
 {
     public class ESDEdits
     {
+        // TODO: This is incredibly wrong
         public enum ComparisonType
         {
             Equal = 0,
@@ -439,7 +440,7 @@ namespace SoulsIds
             long baseId = talkState;
             ESD.State resultState;
             (resultStateId, resultState) = AST.AllocateState(machine, ref baseId);
-            resultState.Conditions.Add(new ESD.Condition(loopId, null));
+            resultState.Conditions.Add(new ESD.Condition(loopId, AST.AssembleExpression(AST.Pass)));
 
             // Add talk condition for state
             AST.Expr buyCond = new AST.BinaryExpr { Op = "==", Lhs = AST.MakeFunction("f23"), Rhs = AST.MakeVal(talkListId) };

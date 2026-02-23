@@ -5,7 +5,9 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using static SoulsIds.GameSpec;
@@ -26,6 +28,7 @@ namespace SoulsIds
         private readonly string modengineDllConfig;
         // Modengine3
         private readonly string supportsGame;
+        private readonly string me3Launcher;
 
         public ModRunner(FromGame game, string modengineConfig, string modengineLauncher = null, string modengineDllConfig = null)
         {
@@ -37,8 +40,11 @@ namespace SoulsIds
             }
             else if (game == FromGame.DS3)
             {
+                // me3 crashes often
+                // supportsGame = "ds3";
                 optName = "ds3";
                 processName = "DarkSoulsIII";
+                // me3 = true;
             }
             else if (game == FromGame.DS1R)
             {
@@ -54,7 +60,11 @@ namespace SoulsIds
             else throw new ArgumentException($"Unsupported game {game}");
             this.modengineConfig = modengineConfig;
             this.modengineDllConfig = modengineDllConfig;
-            if (!me3)
+            if (me3)
+            {
+                me3Launcher = GetAssociatedExecutable(".me3");
+            }
+            else
             {
                 if (modengineLauncher == null)
                 {
@@ -123,9 +133,14 @@ namespace SoulsIds
             if (me3)
             {
                 string extra = "";
-                if (Path.GetFileName(path).Equals("NightreignRandomizerHelper.dll", StringComparison.OrdinalIgnoreCase))
+                string name = Path.GetFileName(path);
+                if (name.Equals("NightreignRandomizerHelper.dll", StringComparison.OrdinalIgnoreCase))
                 {
-                    extra = $"# Needed for fmg hook{Environment.NewLine}load_before = [ {{\"id\" = \"nrsc.dll\", \"optional\" = true}} ]{Environment.NewLine}";
+                    extra = $"# Needed for fmg hook{Environment.NewLine}load_before = [ {{\"id\" = \"nrsc.dll\", \"optional\" = true}} ]{Environment.NewLine}load_early = true{Environment.NewLine}";
+                }
+                else if (name.Equals("nrsc.dll", StringComparison.OrdinalIgnoreCase))
+                {
+                    extra = $"load_early = true{Environment.NewLine}";
                 }
                 return $"[[natives]]{Environment.NewLine}path = '''{path}'''{Environment.NewLine}{extra}{Environment.NewLine}";
             }
@@ -269,28 +284,47 @@ mods = [
 
         public bool IsGameRunning() => IsMaybeRunning() ?? false;
         public bool IsLaunching() => currentProcess != null;
+        public bool WasMe3Found() => !string.IsNullOrEmpty(me3Launcher);
+
+        public void CreateDllLaunchFile(List<string> extraDlls)
+        {
+            if (modengineDllConfig == null) throw new Exception($"Internal error: extra dlls given but no dll config name is defined");
+            MergedMods.AddExternalDlls(modengineConfig, modengineDllConfig, extraDlls);
+        }
 
         // https://stackoverflow.com/questions/10174156/open-file-with-associated-application
+        // However: https://stackoverflow.com/questions/770023/how-do-i-get-file-type-information-based-on-extension-not-mime-in-c-sharp
+        private static readonly bool launchExplorer = false;
         public async Task LaunchGame(List<string> extraDlls = null)
         {
             if (currentProcess != null) return;
             string launchFile = modengineConfig;
-            if (!me3 && extraDlls != null && extraDlls.Count > 0 && File.Exists(modengineConfig))
+            if (!me3 && extraDlls != null && File.Exists(modengineConfig))
             {
-                // In this case (DS1 for now), pass extraDlls into the launch file instead
-                // This flow is done on launch, to avoid rerunning randomizer for separate dll list
-                if (modengineDllConfig == null) throw new Exception($"Internal error: extra dlls given but no dll config name is defined");
-                MergedMods.AddExternalDlls(modengineConfig, modengineDllConfig, extraDlls);
+                // For Elden Ring, this flow is done on launch, to avoid rerunning randomizer for separate dll list
+                // DS1 passes extraDlls into the launch file
+                CreateDllLaunchFile(extraDlls);
                 launchFile = modengineDllConfig;
             }
             using (Process process = new Process())
             {
                 if (me3)
                 {
-                    process.StartInfo.FileName = "explorer";
-                    process.StartInfo.Arguments = launchFile;
-                    // process.StartInfo.UseShellExecute = false;
-                    process.EnableRaisingEvents = true;
+                    if (launchExplorer)
+                    {
+                        process.StartInfo.FileName = "explorer";
+                        process.StartInfo.Arguments = launchFile;
+                    }
+                    else
+                    {
+                        if (string.IsNullOrEmpty(me3Launcher))
+                        {
+                            throw new Exception($"Cannot launch game: No me3 launcher was found associated with .me3 format");
+                        }
+                        process.StartInfo.FileName = me3Launcher;
+                        process.StartInfo.Arguments = $@"launch -p {launchFile}";
+                        process.StartInfo.UseShellExecute = false;
+                    }
                 }
                 else
                 {
@@ -300,8 +334,8 @@ mods = [
                     process.StartInfo.Arguments = $@"-t {optName} -c ..\..\{launchFile}";
                     process.StartInfo.WorkingDirectory = Path.GetDirectoryName(modengineLauncher);
                     process.StartInfo.UseShellExecute = false;
-                    process.EnableRaisingEvents = true;
                 }
+                process.EnableRaisingEvents = true;
 
                 // Start
                 currentProcess = process;
@@ -478,6 +512,19 @@ mods = [
                 byte[] hash = Hasher.ComputeHash(stream);
                 return string.Join("", hash.Select(x => $"{x:x2}"));
             }
+        }
+
+        [DllImport("Shlwapi.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        static extern uint AssocQueryString(int flags, int str, string pszAssoc, string pszExtra, [Out] StringBuilder pszOut, [In][Out] ref uint pcchOut);
+
+        public static string GetAssociatedExecutable(string ext)
+        {
+            uint pcchOut = 0;
+            AssocQueryString(0x40, 2, ext, null, null, ref pcchOut);
+
+            StringBuilder pszOut = new StringBuilder((int)pcchOut);
+            AssocQueryString(0x40, 2, ext, null, pszOut, ref pcchOut);
+            return pszOut.ToString();
         }
     }
 }
