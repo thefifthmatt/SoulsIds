@@ -127,7 +127,7 @@ namespace SoulsIds
         public Dictionary<T, string> LoadNamesRel<T>(string path, Func<string, T> key)
         {
             Dictionary<T, string> ret = new Dictionary<T, string>();
-            foreach (var line in File.ReadLines(path))
+            foreach (string line in File.ReadLines(path))
             {
                 if (line.StartsWith("#")) continue;
                 int spot = line.IndexOf(' ');
@@ -352,11 +352,11 @@ namespace SoulsIds
 
         // Overrides bnd, relative to current dir, and outputs to directory, relative to game dir if not absolute path
         // This is the second-worst method. Is anything using this?
-        public void OverrideBnd<T>(string path, string toDir, Dictionary<string, T> diffData, Func<T, byte[]> writer, string fileExt = null)
+        public void OverrideBnd<T>(string path, string toDir, Dictionary<string, T> diffData, Func<T, byte[]> writer, string fileExt = null, DCX.Type overrideDcx = DCX.Type.Unknown)
         {
             string fname = Path.GetFileName(path);
             string outPath = AbsolutePath(Spec.GameDir, $@"{toDir}\{fname}");
-            OverrideBndRel(path, outPath, diffData, writer, fileExt);
+            OverrideBndRel(path, outPath, diffData, writer, fileExt, overrideDcx);
         }
 
         // Overrides bnd, relative to current dir, and outputs to other file
@@ -375,11 +375,12 @@ namespace SoulsIds
         public IBinder GetOverrideBndRel<T>(string path, Dictionary<string, T> diffData, Func<T, byte[]> writer, string fileExt = null)
         {
             IBinder bnd = ReadBnd(path);
-            foreach (BinderFile file in bnd.Files)
+            // foreach (BinderFile file in bnd.Files)
+            void writeBytes(BinderFile file)
             {
-                if (fileExt != null && !file.Name.EndsWith(fileExt)) continue;
+                if (fileExt != null && !file.Name.EndsWith(fileExt)) return;
                 string bndName = BaseName(file.Name);
-                if (!diffData.ContainsKey(bndName) || diffData[bndName] == null) continue;
+                if (!diffData.ContainsKey(bndName) || diffData[bndName] == null) return;
                 try
                 {
                     byte[] data = writer(diffData[bndName]);
@@ -393,6 +394,8 @@ namespace SoulsIds
                     Console.WriteLine($"Failed to load {path}: {bndName}: {ex}");
                 }
             }
+            bnd.Files.ForEach(writeBytes);
+            // Alternative: Parallel.ForEach(bnd.Files, writeBytes);
             return bnd;
         }
 

@@ -1,11 +1,13 @@
+using SoulsFormats;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Globalization;
-using System.Text.RegularExpressions;
-using SoulsFormats;
-using static SoulsFormats.EMEVD.Instruction;
+using System.Linq;
 using System.Net;
+using System.Text;
+using System.Text.RegularExpressions;
+using static SoulsFormats.EMEVD.Instruction;
+using static SoulsIds.Events;
 
 namespace SoulsIds
 {
@@ -90,9 +92,10 @@ namespace SoulsIds
         }
 
         private EMEDF doc;
-        private Dictionary<string, (int, int)> docByName = new Dictionary<string, (int, int)>();
-        private Dictionary<string, int> enumByName = new Dictionary<string, int>();
-        private Dictionary<EMEDF.InstrDoc, List<int>> funcBytePositions = new Dictionary<EMEDF.InstrDoc, List<int>>();
+        private Dictionary<string, (int, int)> docByName = new();
+        private Dictionary<string, int> enumByName = new();
+        private Dictionary<EMEDF.InstrDoc, List<int>> funcBytePositions = new();
+        private HashSet<(int, int)> skipInstructions = new();
         private Dictionary<EMEDF.InstrDoc, Dictionary<int, EventValueType>> funcValueTypes = null;
         private readonly bool darkScriptMode;
         private readonly bool paramAwareMode;
@@ -200,6 +203,14 @@ namespace SoulsIds
                     if (bytePos % 4 > 0) bytePos += 4 - (bytePos % 4);
                     AddMulti(funcBytePositions, instr, bytePos);
                 }
+            }
+            // With docByName finalized, find skip instructions
+            // Rely on naming convention (other conditions could be used if necessary, like bank ids and argument enums)
+            if (darkScriptMode && skipAwareMode)
+            {
+                skipInstructions = new(docByName
+                    .Where(e => e.Key.StartsWith("SkipIf") || e.Key == "SkipUnconditionally")
+                    .Select(e => e.Value));
             }
 
             if (doc?.DarkScript?.MetaTypes != null && valueSpecs == null)
@@ -444,16 +455,43 @@ namespace SoulsIds
             };
         }
 
+        // Utilities for quick edits
         public static void AddSimpleEvent(
             EMEVD emevd, int id,
             IEnumerable<EMEVD.Instruction> instrs,
             EMEVD.Event.RestBehaviorType rest = EMEVD.Event.RestBehaviorType.Default)
         {
             EMEVD.Event ev = new EMEVD.Event(id, rest);
-            // ev.Instructions.AddRange(instrs.Select(t => events.ParseAdd(t)));
             ev.Instructions.AddRange(instrs);
+            AddSimpleEventAndInit(emevd, ev);
+        }
+
+        public void AddSimpleEvent(
+            EMEVD emevd, int id, IEnumerable<string> instrs, EMEVD.Event.RestBehaviorType rest = EMEVD.Event.RestBehaviorType.Default)
+        {
+            EMEVD.Event ev = GetSimpleEvent(id, instrs, rest);
+            AddSimpleEventAndInit(emevd, ev);
+        }
+
+        public static void AddSimpleEventAndInit(EMEVD emevd, EMEVD.Event ev)
+        {
             emevd.Events.Add(ev);
-            emevd.Events[0].Instructions.Add(new EMEVD.Instruction(2000, 0, new List<object> { 0, (uint)id, (uint)0 }));
+            emevd.Events[0].Instructions.Add(new EMEVD.Instruction(2000, 0, new List<object> { 0, (uint)ev.ID, (uint)0 }));
+        }
+
+        public EMEVD.Event GetSimpleEvent(
+            int id, IEnumerable<string> instrs, EMEVD.Event.RestBehaviorType rest = EMEVD.Event.RestBehaviorType.Default)
+        {
+            EMEVD.Event ev = new EMEVD.Event(id, rest);
+            OldParams pre = OldParams.NewEvent(ev);
+            foreach (string ins in instrs)
+            {
+                (EMEVD.Instruction instr, List<EMEVD.Parameter> ps) = ParseAddArg(ins);
+                ev.Instructions.Add(instr);
+                pre.AddParameters(instr, ps);
+            }
+            pre.Postprocess();
+            return ev;
         }
 
         // Instruction metadata
@@ -485,7 +523,10 @@ namespace SoulsIds
                 {
                     ret.Offset = 1;
                 }
-                ret.Callee = (int)args[ret.Offset - 1];
+                // DS1R and Sekiro have -1 event id, but Elden Ring has uint-only event ids
+                int callee = (int)args[ret.Offset - 1];
+                // This is a thing in DS1
+                ret.Callee = callee == -1 ? 0 : (uint)callee;
             }
             if (paramAwareMode && pre != null)
             {
@@ -546,7 +587,7 @@ namespace SoulsIds
             // Whether an event initialization or not
             public bool Init { get; set; }
             // If an event initialization, which event is being initialized
-            public int Callee { get; set; }
+            public uint Callee { get; set; }
             // If an event initialization, the index start of actual event arguments
             public int Offset { get; set; }
             public int CalleeOffset => Offset - 1;
@@ -629,10 +670,9 @@ namespace SoulsIds
 
             public bool TryCalleeKey(ICollection<EventKey> check, string map, out EventKey key)
             {
-                // TODO: Check if 1050402210 actually works or not
-                key = new EventKey(Callee, map);
-                if (check.Contains(key)) return true;
                 key = new EventKey(Callee, "common_func");
+                if (check.Contains(key)) return true;
+                key = new EventKey(Callee, map);
                 if (check.Contains(key)) return true;
                 key = null;
                 return false;
@@ -742,7 +782,7 @@ namespace SoulsIds
             return new EMEVD.Parameter(newIndex >= 0 ? newIndex : p.InstructionIndex, p.TargetStartByte, p.SourceStartByte, p.ByteCount);
         }
 
-        public EMEVD.Event CopyEvent(EMEVD.Event src, int newId)
+        public EMEVD.Event CopyEvent(EMEVD.Event src, long newId)
         {
             EMEVD.Event newEvent = new EMEVD.Event(newId, src.RestBehavior);
             if (src.Parameters.Count > 0)
@@ -755,10 +795,10 @@ namespace SoulsIds
 
         public Instr CopyInit(Instr instr, EMEVD.Event newEvent, OldParams pre = null)
         {
-            return CopyInit(instr, newEvent == null ? -1 : (int)newEvent.ID, pre);
+            return CopyInit(instr, newEvent == null ? -1 : newEvent.ID, pre);
         }
 
-        public Instr CopyInit(Instr instr, int newEventId, OldParams pre = null)
+        public Instr CopyInit(Instr instr, long newEventId, OldParams pre = null)
         {
             // Assume this is copying common id/map id to fresh map id
             Instr newInstr = Parse(CopyInstruction(instr.Val), pre);
@@ -906,7 +946,7 @@ namespace SoulsIds
                 this.ID = ID;
             }
             public EventValueType Type { get; set; }
-            private object ID { get; set; }
+            internal object ID { get; set; }
 
             public bool IsArg() => ID is string s && s.StartsWith("X");
 
@@ -970,7 +1010,25 @@ namespace SoulsIds
                 }
             }
 
-            // Convenience functions for event-editing, which are currently mostly int-based
+            public bool Matches(object obj)
+            {
+                if (obj is string so)
+                {
+                    // This is necessary as RewriteInts has a string overload, but it's very slow
+                    return StrID == so;
+                }
+                else if (obj is uint uo)
+                {
+                    return TryUIntID(out uint u) && u == uo;
+                }
+                else if (obj is int io)
+                {
+                    return TryIntID(out int i) && i == io;
+                }
+                return false;
+            }
+
+            // Convenience functions for event-editing, which are currently mostly int-based (and must be that way for Matches to work)
             public static EventValue Enemy(int id) => new EventValue(EventValueType.Enemy, id);
             public static EventValue Enemy(uint id) => new EventValue(EventValueType.Enemy, id);
             public static EventValue Asset(int id) => new EventValue(EventValueType.Asset, id);
@@ -999,12 +1057,13 @@ namespace SoulsIds
         {
             EventValueType.WarpPlayer, EventValueType.Asset, EventValueType.Object, EventValueType.Enemy, EventValueType.Collision,
         };
-        // Ids which correspond to map objects
+        // Ids which correspond to concrete map objects
         public static readonly List<EventValueType> MapTypes =
             PartTypes.Concat(new[] { EventValueType.Region, EventValueType.Generator }).ToList();
         // Any addressable entity id, including meta ids
         public static readonly List<EventValueType> EntityTypes =
             MapTypes.Concat(new[] { EventValueType.Player, EventValueType.Entity, EventValueType.Boss }).ToList();
+
         public enum EventValueType
         {
             Unknown,
@@ -1033,23 +1092,95 @@ namespace SoulsIds
         private static bool AreTypesCompatible(EventValueType a, EventValueType b)
         {
             if (a == EventValueType.All || b == EventValueType.All) return true;
-            // While there are subcategories involved here, they all share the same entity id namespace
+            // While there are subcategories involved here, they all share the same entity id namespace, non-vanilla edge cases aside
             if (EntityTypes.Contains(a) && EntityTypes.Contains(b)) return true;
             return a == b;
         }
 
+        public class RelocMap
+        {
+            // Typed ids to swap in-place.
+            // Note the type of the EventValue key isn't used for matching, only the type of the EventKey value,
+            // but it is an alternative to maintaining a multi-dictionary directly by id.
+            private readonly Dictionary<EventValue, EventValue> map = new();
+            // Multi-dictionary cached by id.
+            private ILookup<uint, EventValue> lookup;
+
+            public static RelocMap Of(EventValue from, EventValue to)
+            {
+                RelocMap ret = new();
+                ret[from] = to;
+                return ret;
+            }
+
+            // Shimmy for dictionary methods used
+            public EventValue this[EventValue key]
+            {
+                get => map[key];
+                set
+                {
+#if DEBUG
+                    if (!key.TryUIntID(out _)) throw new Exception($"{key} (type {key.ID.GetType()}) is not an integer");
+#endif
+                    map[key] = value;
+                    lookup = null;
+                }
+            }
+            public bool TryGetValue(EventValue key, out EventValue value) => map.TryGetValue(key, out value);
+            public bool IsEmpty() => map.Count == 0;
+            // For making copies of the base map
+            public List<EventValue> Keys() => map.Keys.ToList();
+
+            // TODO: Replace with ILookup
+            public IEnumerable<KeyValuePair<EventValue, EventValue>> Entries() => map;
+            public IEnumerable<EventValue> GetMatches(object obj)
+            {
+                if (lookup == null)
+                {
+                    lookup = map.ToLookup(e => e.Key.TryUIntID(out uint id) ? id : 1122334455, e => e.Value);
+                }
+                if (obj is uint u)
+                {
+                    // Missing key is allowed
+                    return lookup[u];
+                }
+                else if (obj is int i)
+                {
+                    return lookup[(uint)i];
+                }
+                // Try to avoid storing integer arguments as strings, but segment rewrites use them currently
+                // Also, arbitrary arguments can be strings, so try to avoid calling this method with them
+                else if (obj is string s && long.TryParse(s, out long l))
+                {
+                    return lookup[(uint)l];
+                }
+                return Enumerable.Empty<EventValue>();
+            }
+        }
+
         public bool IsArgCompatible(EMEDF.InstrDoc instrDoc, int index, EventValueType type)
         {
+            // Check for type compatibility, if that feature is enabled via presence of funcValueTypes
             if (funcValueTypes != null && type != EventValueType.All)
             {
-                // Check for type compatibility, if that feature is enabled
-                if (!funcValueTypes.TryGetValue(instrDoc, out Dictionary<int, EventValueType> types)) return false;
-                List<int> offsets = funcBytePositions[instrDoc];
-                if (index >= offsets.Count) return false;
-                if (!types.TryGetValue(offsets[index], out EventValueType argType)) return false;
+                if (!GetArgType(instrDoc, index, out EventValueType argType)) return false;
                 if (!AreTypesCompatible(type, argType)) return false;
             }
             return true;
+        }
+
+        private bool GetArgType(EMEDF.InstrDoc instrDoc, int index, out EventValueType argType)
+        {
+            if (funcValueTypes != null && funcValueTypes.TryGetValue(instrDoc, out Dictionary<int, EventValueType> types))
+            {
+                List<int> offsets = funcBytePositions[instrDoc];
+                if (index < offsets.Count)
+                {
+                    return types.TryGetValue(offsets[index], out argType);
+                }
+            }
+            argType = default;
+            return false;
         }
 
         public enum SegmentState
@@ -1112,11 +1243,16 @@ namespace SoulsIds
         // Mattscript compilation can rewrite condition groups, so if we need to match them, check for rewrites.
         // TODO: Split this out?
         public Dictionary<int, int> AdjustConditionGroups(
-            EventEdits e, EMEVD.Event ev, OldParams pre, string condOrder, bool expectVanilla, int origin)
+            EventEdits e, EMEVD.Event ev, OldParams pre, string condOrder, bool expectVanilla, long origin)
         {
             // Mainly NameArgEdits are relevant here.
             // ArgEdits would be inadivsable to use for condition groups (but Sekiro might use them).
-            if (e.NameArgEdits == null) return null;
+            bool debug = false;
+            if (e.NameArgEdits == null)
+            {
+                if (debug) Console.WriteLine($"{origin}: No NameArgEdits needed");
+                return null;
+            }
             int parseCond(string condStr)
             {
                 if (!int.TryParse(condStr, out int cond))
@@ -1128,9 +1264,13 @@ namespace SoulsIds
                 }
                 return cond;
             }
-            // First, find condition group definitions which can be used to verify condition groups
-            // (usages cannot be used for this, but they should be rewritten anyway).
+            // First, find condition group definitions which can be used to verify condition groups.
+            // (normally, usages are not used for this )
+            // Map from (command name, command args except condition) -> defined conditions
             Dictionary<(string, string), List<int>> definitions = null;
+            // Map from defined condition group in IfConditionGroup to usages
+            // At the moment, only for 2049430830 (condition groups -2 have no usable definitions), which isn't generally correct but is tolerable for now
+            Dictionary<int, int> defineUsages = null;
             HashSet<int> needsRewrite = null;
             foreach (((string cmd, string args), List<InstrEdit> edits) in e.NameArgEdits)
             {
@@ -1138,13 +1278,24 @@ namespace SoulsIds
                 if (!docByName.TryGetValue(cmd, out (int, int) docId)) throw new Exception($"Internal error: unrecognized command in edit {cmd}({args})");
                 if (docId.Item1 >= 1000 && !ConditionGroupUsage.ContainsKey(docId)) continue;
                 EMEDF.InstrDoc instrDoc = doc[docId.Item1][docId.Item2];
-                // Non-interesting commands need to be rewritten, but ignore them for now.
                 if (ConditionGroupUsage.TryGetValue(docId, out int pos))
                 {
+                    string[] argList = args.Split(',');
+                    int def = parseCond(argList[0]);
+                    int usage = parseCond(argList[pos]);
                     needsRewrite ??= new HashSet<int>();
-                    needsRewrite.Add(parseCond(args.Split(',')[pos]));
+                    needsRewrite.Add(usage);
+                    if (origin == 2049430830 && docId == (0, 0) && def != 0)
+                    {
+                        defineUsages ??= new();
+                        defineUsages[def] = usage;
+                    }
+                    continue;
                 }
-                if (docId.Item1 >= 1000 || ConditionGroupUsage.ContainsKey(docId)) continue;
+                else if (docId.Item1 >= 1000)
+                {
+                    continue;
+                }
                 // if (funcValueTypes != null && !funcValueTypes.ContainsKey(instrDoc)) continue;
                 string[] condParts = args.Split(new[] { ',' }, 2);
                 int cond = parseCond(condParts[0]);
@@ -1187,6 +1338,12 @@ namespace SoulsIds
             if (needsRewrite != null)
             {
                 needsRewrite.Remove(0);
+                if (defineUsages != null)
+                {
+                    // Technically this adds a dependency on defineUsages.Values (only for ambiguous defineUsages.Keys, i.e. those not
+                    // not present in definitions.Values), but assume configs are reasonable enough to define things they use.
+                    needsRewrite.ExceptWith(defineUsages.Keys);
+                }
                 if (definitions != null)
                 {
                     needsRewrite.ExceptWith(definitions.Values.SelectMany(e => e));
@@ -1226,8 +1383,10 @@ namespace SoulsIds
             }
             if (definitions == null)
             {
+                if (debug) Console.WriteLine($"{origin}: No cond definitions to rewrite");
                 return null;
             }
+            if (debug) Console.WriteLine($"{origin}: Definitions: {string.Join(" ", definitions.Select(e => $"{e.Key}=[{string.Join(", ", e.Value)}]"))}");
             int stopLabel = -1;
             if (condOrder != null && condOrder.StartsWith("<"))
             {
@@ -1275,10 +1434,10 @@ namespace SoulsIds
                             AddMulti(mainGroups, newDef, (instr.Name, string.Join(",", strArgs)));
                         }
                     }
-                    // Console.WriteLine($"In {origin}->{ev.ID}: {instr} has defs [{string.Join(",", prior)}]->usage {actual}->cands {string.Join(",", matching)})");
+                    // if (origin == 2049430830) Console.WriteLine($"In {origin}->{ev.ID}: {instr} has defs [{string.Join(",", prior)}]->usage {actual}->cands {string.Join(",", matching)}");
                 }
             }
-            string desc() => string.Join("; ", candidates.Select(e => $"[{string.Join(",", e.Value)}]->{e.Key}"));
+            string desc(Dictionary<int, List<int>> dict = null) => string.Join("; ", (dict ?? candidates).Select(e => $"[{string.Join(",", e.Value)}]->{e.Key}"));
             if (expectVanilla)
             {
                 List<int> mismatch = candidates.Where(e => !e.Value.Contains(e.Key)).Select(e => e.Key).ToList();
@@ -1292,6 +1451,7 @@ namespace SoulsIds
             // If vanilla configuration is possible, permit that
             if (candidates.All(e => e.Value.Contains(e.Key)))
             {
+                if (debug) Console.WriteLine($"{origin}: All expected condition groups are present");
                 return null;
             }
             // Narrow down definitive mappings
@@ -1328,6 +1488,17 @@ namespace SoulsIds
                 List<int> configConds = reduced.SelectMany(e => e.Value).Distinct().ToList();
                 if (actualConds.Count == configConds.Count && condOrder != null)
                 {
+                    // a->b syntax is a last-ditch effort when condition signs change
+                    // Ultimately it needs to be solved with recursive/flexible CondIdentity selection, or dynamic edits
+                    foreach (string c in condOrder.Split(' ').Where(c => c.Contains("->")))
+                    {
+                        string[] parts = c.Split("->");
+                        int configCond = int.Parse(parts[0]);
+                        int actualCond = int.Parse(parts[1]);
+                        reduced.Remove(actualCond);
+                        newConds[configCond] = actualCond;
+                        if (debug) Console.WriteLine($"{origin}: Manually mapping {configCond} -> {actualCond}");
+                    }
                     List<int> order = condOrder.Split(' ').Select(c => int.TryParse(c, out int i) ? i : 0).Where(i => i != 0).ToList();
                     if (configConds.All(c => order.Contains(c)))
                     {
@@ -1336,8 +1507,8 @@ namespace SoulsIds
                             // In this case, assume Mattscript ordering
                             List<int> configSubconds = configConds.Where(c => c > 0 == positive).OrderBy(c => order.IndexOf(c)).ToList();
                             List<int> actualSubconds = actualConds.Where(c => c > 0 == positive).OrderBy(c => Math.Abs(c)).ToList();
-                            // if (origin == 31212810) Console.WriteLine($"Mapping config {string.Join(",", configSubconds)} -> {string.Join(",", actualSubconds)}");
-                            for (int i = 0; i < configSubconds.Count; i++)
+                            if (debug) Console.WriteLine($"{origin}: Mapping config {string.Join(",", configSubconds)} -> {string.Join(",", actualSubconds)}");
+                            for (int i = 0; i < Math.Min(configSubconds.Count, actualSubconds.Count); i++)
                             {
                                 reduced.Remove(actualSubconds[i]);
                                 newConds[configSubconds[i]] = actualSubconds[i];
@@ -1348,12 +1519,13 @@ namespace SoulsIds
                 if (reduced.Count > 0)
                 {
                     // If this error happens, add a CondOrder that includes all of the config condition groups.
-                    e.PreprocessError = $"Ambiguous condition groups in {origin}: couldn't map config groups->actual groups {desc()} {condOrder}";
+                    // Don't throw immediately, just add context if the edits subsequently fail
+                    e.PreprocessError = $"Ambiguous condition groups in {origin}: couldn't map config groups->actual groups {desc()} {condOrder}\nUnmatched: {desc(reduced)}";
                     return null;
                 }
             }
             // Edit all edits now
-            // Console.WriteLine($"for {origin}: {string.Join(" ", newConds)}. {desc()}");
+            if (debug) Console.WriteLine($"{origin}: Mapping {string.Join(" ", newConds)}. {desc()}");
             bool rewriteCommand(string cmd, string args, out string newCmd, out string newArgs)
             {
                 newCmd = cmd;
@@ -1424,7 +1596,7 @@ namespace SoulsIds
                     e.NameArgEdits.Remove(key);
                     searchInfo = $"{cmd}({args}) -> {(cmd != newCmd ? newCmd : "")}({newArgs})";
                 }
-                // Console.WriteLine($"{origin} changed {cmd}({args} -> {newArgs}) with {string.Join(",", newConds.Select(n => $"{n.Key}->{n.Value}"))}");
+                if (debug) Console.WriteLine($"{origin}: Changed {cmd}({args} -> {newArgs}) with {string.Join(",", newConds.Select(n => $"{n.Key}->{n.Value}"))}");
                 foreach (InstrEdit edit in edits)
                 {
                     if (searchInfo != null)
@@ -1744,7 +1916,7 @@ namespace SoulsIds
                 + (ValEdit == null ? "" : $"[Replace:{string.Join(", ", ValEdit)}]");
         }
 
-        public void ApplyAllEdits(EMEVD.Event ev, EventEdits edits)
+        public void ApplyAllEdits(EMEVD.Event ev, EventEdits edits, Func<string> unappliedErrorText = null)
         {
             OldParams pre = OldParams.Preprocess(ev);
             for (int j = 0; j < ev.Instructions.Count; j++)
@@ -1759,7 +1931,16 @@ namespace SoulsIds
             pre.Postprocess();
             if (edits.PendingEdits.Count != 0)
             {
-                throw new Exception($"{ev.ID} has unapplied edits: {string.Join("; ", edits.PendingEdits)}");
+                StringBuilder err = new();
+                err.Append(unappliedErrorText?.Invoke() ?? $"{ev.ID} has unapplied edits");
+                err.Append($": {string.Join("; ", edits.PendingEdits)}");
+                if (edits.PreprocessError != null)
+                {
+                    err.AppendLine();
+                    err.Append(edits.PreprocessError);
+                }
+                // Maybe also split out above loop to support throwing all errors at the end
+                throw new Exception(err.ToString());
             }
         }
 
@@ -1787,8 +1968,9 @@ namespace SoulsIds
                 for (int j = e.Instructions.Count - 1; j >= 0; j--)
                 {
                     // Console.WriteLine($"Have {e.ID} {e.Instructions.Count} instructions, got {e.Instructions[j]} {j}");
-                    // TODO: Figure out a better command to use in DS1
-                    Instr instr = e.Instructions[j].Bank == 1014 ? null : Parse(e.Instructions[j], oldParams);
+                    // It is an error to parse instructions with bank 1014 here (use different command in DS1 if possible)
+                    Instr skipInstr = skipInstructions.Contains((e.Instructions[j].Bank, e.Instructions[j].ID))
+                        ? Parse(e.Instructions[j], oldParams) : null;
                     int added = 0;
                     if (edits.PendingAdds.TryGetValue(j, out List<InstrEdit> lineEdit))
                     {
@@ -1803,19 +1985,19 @@ namespace SoulsIds
                             }
                         }
                     }
-                    if (instr?.Name != null && (instr.Name.StartsWith("SkipIf") || instr.Name == "SkipUnconditionally"))
+                    if (skipInstr != null)
                     {
-                        int skip = (byte)instr[0];
+                        int skip = (byte)skipInstr[0];
                         // Look at last n "original" instructions to see how many were duplicated, including after this command
                         int skipExtra = added + Enumerable.Reverse(addedLines).Take(skip).Sum();
                         if (skipExtra > 0)
                         {
-                            instr[0] = (byte)(skip + skipExtra);
+                            skipInstr[0] = (byte)(skip + skipExtra);
                             // Make sure to transfer existing parameters
                             List<EMEVD.Parameter> ps = oldParams?.GetInstructionParams(e.Instructions[j]);
-                            instr.Save(oldParams);
-                            e.Instructions[j] = instr.Val;
-                            oldParams?.AddParameters(instr.Val, ps);
+                            skipInstr.Save(oldParams);
+                            e.Instructions[j] = skipInstr.Val;
+                            oldParams?.AddParameters(skipInstr.Val, ps);
                             // Console.WriteLine(instr.ToString());
                         }
                     }
@@ -1984,6 +2166,7 @@ namespace SoulsIds
             string toFind = null, bool applyOnce = false, EventValueType type = EventValueType.All)
         {
 #if DEBUG
+            // Throw for parse failure at point where it's added
             ParseAddOptArg(add);
 #endif
             InstrEdit edit = new InstrEdit
@@ -2086,16 +2269,9 @@ namespace SoulsIds
         }
 
         // Type-aware rewrite
-        private IEnumerable<EventValue> GetMatchingValues(Dictionary<EventValue, EventValue> changes, object arg)
-        {
-            // Assuming the args are compatible. Use string comparison for this, but it's intended for int types
-            string argStr = arg.ToString();
-            return changes.Where(e => e.Key.StrID == argStr).Select(e => e.Value);
-        }
-
         public void RewriteInitInts(
             Instr instr,
-            Dictionary<EventValue, EventValue> changes,
+            RelocMap changes,
             Dictionary<int, EventValueType> allowedTypes = null)
         {
             if (!instr.Init) throw new Exception($"Internal error: can't call method for non-init {instr}");
@@ -2107,7 +2283,7 @@ namespace SoulsIds
                 {
                     type = argType;
                 }
-                foreach (EventValue value in GetMatchingValues(changes, arg))
+                foreach (EventValue value in changes.GetMatches(arg))
                 {
                     if (AreTypesCompatible(value.Type, type))
                     {
@@ -2126,13 +2302,16 @@ namespace SoulsIds
             }
         }
 
-        public void RewriteInts(Instr instr, Dictionary<EventValue, EventValue> changes)
+        public void RewriteInts(Instr instr, RelocMap changes)
         {
             for (int i = 0; i < instr.ArgList.Count; i++)
             {
                 object arg = instr.ArgList[i];
-                foreach (EventValue value in GetMatchingValues(changes, arg))
+                // Additional optimization can be done to pre-check if the arg has any type in type-matching mode,
+                // but the RelocMap cache is basically all that's needed
+                foreach (EventValue value in changes.GetMatches(arg))
                 {
+                    // Is the instr.Init condition still needed?
                     if (instr.Init || IsArgCompatible(instr.Doc, i, value.Type))
                     {
                         if (arg is int ik)
@@ -2150,14 +2329,14 @@ namespace SoulsIds
             }
         }
 
-        public string RewriteInts(string add, Dictionary<EventValue, EventValue> changes)
+        public string RewriteInts(string add, RelocMap changes)
         {
             (string cmd, List<string> addArgs) = ParseCommandString(add);
             if (!docByName.TryGetValue(cmd, out (int, int) docId)) throw new Exception($"Unrecognized command '{cmd}' in {add}");
             EMEDF.InstrDoc addDoc = doc[docId.Item1][docId.Item2];
             for (int i = 0; i < addArgs.Count; i++)
             {
-                foreach (EventValue value in GetMatchingValues(changes, addArgs[i]))
+                foreach (EventValue value in changes.GetMatches(addArgs[i]))
                 {
                     if (IsArgCompatible(addDoc, i, value.Type))
                     {
@@ -2425,6 +2604,8 @@ namespace SoulsIds
             return false;
         }
 
+        public static bool TryFullArgSpec(string arg, out int offset) => TryFullArgSpec(arg, out offset, out _);
+
         public static bool TryFullArgSpec(string arg, out int offset, out int len)
         {
             // Only args formatted like X0_4
@@ -2439,15 +2620,16 @@ namespace SoulsIds
         // Code for producing event configs
         public class EventKey : IComparable<EventKey>
         {
-            public EventKey(int ID, string Map, int FileOrder = -1)
+            public EventKey(long ID, string Map, int FileOrder = -1)
             {
-                this.ID = ID;
+                this.ID = (uint)ID;
                 this.Map = Map;
                 this.FileOrder = FileOrder;
             }
-            public int ID { get; set; }
             // Nullable for legacy reaons
             public string Map { get; set; }
+            // Event id (previously int)
+            public uint ID { get; set; }
             // Optional field for sort only. Requires some care to not get lost in e.g. dictionary key copies
             public int FileOrder { get; set; }
 
@@ -2474,7 +2656,7 @@ namespace SoulsIds
             public static EventKey Parse(string str)
             {
                 string[] parts = str.Split(' ');
-                if (!int.TryParse(parts[0], out int id)) throw new ArgumentException($"Invalid event id in {str}");
+                if (!uint.TryParse(parts[0], out uint id)) throw new ArgumentException($"Invalid event id in {str}");
                 if (parts.Length == 1)
                 {
                     return new EventKey(id, null);
@@ -2495,7 +2677,7 @@ namespace SoulsIds
 
         public abstract class AbstractEventSpec
         {
-            public int ID { get; set; }
+            public uint ID { get; set; }
             public string Map { get; set; }
             public string Comment { get; set; }
             public List<string> DebugInfo { get; set; }
@@ -2555,7 +2737,7 @@ namespace SoulsIds
         public class InstructionAny<T>
         {
             public string File { get; set; }
-            public int Event { get; set; }
+            public uint Event { get; set; }
             public int Flag { get; set; }
             public string Name { get; set; }
             public Instr Val { get; set; }
@@ -2603,7 +2785,7 @@ namespace SoulsIds
             {
                 foreach (EMEVD.Event e in entry.Value.Events)
                 {
-                    EventKey key = new EventKey((int)e.ID, entry.Key);
+                    EventKey key = new EventKey((uint)e.ID, entry.Key);
                     E eventInfo = new E { File = entry.Key, Event = (int)e.ID, UsesParameters = e.Parameters.Count > 0 };
                     eventInfos[key] = eventInfo;
                     for (int i = 0; i < e.Instructions.Count; i++)
@@ -2633,7 +2815,7 @@ namespace SoulsIds
                         I info = new I
                         {
                             File = entry.Key,
-                            Event = (int)e.ID,
+                            Event = (uint)e.ID,
                             Name = instr.Name,
                             Val = instr,
                             Args = darkScriptMode
@@ -2674,7 +2856,7 @@ namespace SoulsIds
             {
                 foreach (EMEVD.Event e in entry.Value.Events)
                 {
-                    EventKey key = new EventKey((int)e.ID, entry.Key);
+                    EventKey key = new EventKey((uint)e.ID, entry.Key);
                     EventAny<T, I> eventInfo = eventInfos[key];
                     // Basic tracking for top-level flag guarding by skips (DS1)
                     // Semi-related, some events are not safe to add inits to the end due to EndIfs.
@@ -2742,7 +2924,7 @@ namespace SoulsIds
                             I caller = new I
                             {
                                 File = entry.Key,
-                                Event = (int)e.ID,
+                                Event = (uint)e.ID,
                                 Name = instr.Name,
                                 Val = instr,
                                 Args = instr.ArgList.Select(renderCallArg).ToList(),
@@ -2890,7 +3072,7 @@ namespace SoulsIds
             Predicate<int> eligibleFilter,
             Func<S> createSpec,
             Func<int, string> quickId,
-            HashSet<int> eventsOverride = null,
+            HashSet<uint> eventsOverride = null,
             HashSet<int> idsOverride = null)
             where S : AbstractEventSpec
         {
@@ -2903,16 +3085,16 @@ namespace SoulsIds
             Predicate<T> eligibleFilter,
             Func<EventKey, S> createSpec,
             Func<T, string> quickId,
-            HashSet<int> eventsOverride = null,
+            HashSet<uint> eventsOverride = null,
             HashSet<T> idsOverride = null,
-            HashSet<int> eventsCustom = null)
+            HashSet<uint> eventsCustom = null)
             where S : AbstractEventSpec
             where I : InstructionAny<T>, new()
             where E : EventAny<T, I>, new()
         {
             List<S> toWrite = new List<S>();
             bool mixCalls = true;
-            HashSet<int> constructorIds = new HashSet<int> { 0, 50, 100, 150, 200, 250 };
+            HashSet<uint> constructorIds = new() { 0, 50, 100, 150, 200, 250 };
             foreach (KeyValuePair<EventKey, E> entry in eventInfos.OrderBy(e => e.Key))
             {
                 E info = entry.Value;
@@ -3056,9 +3238,9 @@ namespace SoulsIds
                 {
                     continue;
                 }
-                if (Acronyms.Contains(words[i].ToUpper()))
+                if (Acronyms.Contains(words[i].ToUpperInvariant()))
                 {
-                    words[i] = words[i].ToUpper();
+                    words[i] = words[i].ToUpperInvariant();
                 }
                 else if (words[i] == "SpEffect")
                 {
@@ -3066,11 +3248,11 @@ namespace SoulsIds
                 }
                 else
                 {
-                    char firstChar = char.ToUpper(words[i][0]);
+                    char firstChar = char.ToUpperInvariant(words[i][0]);
                     string rest = "";
                     if (words[i].Length > 1)
                     {
-                        rest = words[i].Substring(1).ToLower();
+                        rest = words[i].Substring(1).ToLowerInvariant();
                     }
                     words[i] = firstChar + rest;
                 }
@@ -3081,9 +3263,9 @@ namespace SoulsIds
                     for (j = 0; j < words[i].Length; j++)
                     {
                         char ch = words[i][j];
-                        if (char.ToLower(ch) == ch) break;
+                        if (char.ToLowerInvariant(ch) == ch) break;
                     }
-                    words[i] = words[i].Substring(0, j).ToLower() + words[i].Substring(j);
+                    words[i] = words[i].Substring(0, j).ToLowerInvariant() + words[i].Substring(j);
                 }
             }
             string output = Regex.Replace(string.Join("", words), @"[^\w]", "");
@@ -3101,9 +3283,9 @@ namespace SoulsIds
                 {
                     continue;
                 }
-                else if (Acronyms.Contains(words[i].ToUpper()))
+                else if (Acronyms.Contains(words[i].ToUpperInvariant()))
                 {
-                    words[i] = words[i].ToUpper();
+                    words[i] = words[i].ToUpperInvariant();
                     continue;
                 }
                 else if (words[i] == "SpEffect")
@@ -3111,11 +3293,11 @@ namespace SoulsIds
                     continue;
                 }
 
-                char firstChar = char.ToUpper(words[i][0]);
+                char firstChar = char.ToUpperInvariant(words[i][0]);
                 string rest = "";
                 if (words[i].Length > 1)
                 {
-                    rest = words[i].Substring(1).ToLower();
+                    rest = words[i].Substring(1).ToLowerInvariant();
                 }
                 words[i] = firstChar + rest;
             }
@@ -3127,7 +3309,7 @@ namespace SoulsIds
         {
             if (string.IsNullOrEmpty(s)) return s;
             string name = TitleCaseNameOld(s);
-            char firstChar = char.ToLower(name[0]);
+            char firstChar = char.ToLowerInvariant(name[0]);
             if (name.Length > 1)
                 return firstChar + name.Substring(1);
             else

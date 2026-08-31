@@ -150,12 +150,12 @@ namespace SoulsIds
             }
         }
 
-        public void CreateLaunchFile(List<string> commentLines, MergedMods mods = null, List<string> extraDlls = null)
+        public void CreateLaunchFile(List<string> commentLines, string mainDirectory, MergedMods mods = null, List<string> extraDlls = null)
         {
             List<string> modLines = new List<string>();
             List<string> dllLines = new List<string>();
             string mainMod = "randomizer";
-            modLines.Add(FormatModEngineLine(mainMod, Directory.GetCurrentDirectory()));
+            modLines.Add(FormatModEngineLine(mainMod, mainDirectory));
             string prevMod = mainMod;
             if (extraDlls != null)
             {
@@ -381,7 +381,7 @@ mods = [
             return process.HasExited ? Task.CompletedTask : tcs.Task;
         }
 
-        // Maybe support more in the future, but be cautious about bad distributed exes here
+        // Maybe support more in the future, but be cautious about bad distributed exes here (also me3 option)
         private static readonly HashSet<string> validModEngineSHA256 = new HashSet<string>
         {
             "f3741c94bcb7ce7e3764f097e548021f0d1b05e40675ecd6bc2fd51b9eaf9668",
@@ -389,7 +389,7 @@ mods = [
         };
 
         // Should be run with current directory == base mod dir
-        public void ZipModEngineDir(string runName, string zipPath, MergedMods fullMods, Dictionary<string, List<string>> explicitFiles)
+        public void ZipModEngineDir(string runName, string zipPath, MergedMods fullMods, IList<string> mainDlls, IDictionary<string, List<string>> explicitFiles)
         {
             if (!explicitFiles.ContainsKey("")) throw new Exception("Internal error: no mod list file provided for current mod");
             // Calculate merged mods
@@ -404,7 +404,7 @@ mods = [
                 modPaths.Add(dirInfo.Name);
                 validBaseDirs.Add(dirInfo.FullName);
             }
-            foreach (string path in fullMods.ExternalDlls)
+            foreach (string path in mainDlls.Concat(fullMods.ExternalDlls))
             {
                 FileInfo fileInfo = new FileInfo(path);
                 foreach (string baseDir in validBaseDirs)

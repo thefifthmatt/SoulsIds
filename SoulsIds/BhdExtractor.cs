@@ -1,21 +1,31 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Org.BouncyCastle.Crypto;
+﻿using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.OpenSsl;
 using SoulsFormats;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace SoulsIds
 {
     public class BhdExtractor
     {
-        public static Dictionary<string, byte[]> ReadBdtFiles(GameSpec.FromGame game, string gameDir, Dictionary<string, string> pathArchives)
+        public static Dictionary<string, byte[]> ReadBdtFiles(
+            GameSpec.FromGame game,
+            string gameDir,
+            IDictionary<string, string> pathArchives)
         {
-            Dictionary<string, byte[]> ret = new Dictionary<string, byte[]>();
+            // Collection version, to be used if returned files must all be present or populated in a particular order,
+            // but probably worse for memory usage.
+            return EnumerateBdtFiles(game, gameDir, pathArchives).ToDictionary(e => e.Item1, e => e.Item2);
+        }
+
+        public static IEnumerable<(string, byte[])> EnumerateBdtFiles(
+            GameSpec.FromGame game,
+            string gameDir,
+            IDictionary<string, string> pathArchives)
+        {
             List<string> archives = pathArchives.Select(e => e.Value).Distinct().ToList();
             bool debugOrigin = false;
             Dictionary<string, string> keys;
@@ -30,6 +40,11 @@ namespace SoulsIds
                 keys = DS3Keys;
                 bhdGame = BHD5.Game.DarkSouls3;
             }
+            else if (game == GameSpec.FromGame.SDT)
+            {
+                keys = SekiroKeys;
+                bhdGame = BHD5.Game.DarkSouls3;
+            }
             else throw new Exception($"Unsupported {game}");
             if (archives.Any(p => p == null))
             {
@@ -42,13 +57,15 @@ namespace SoulsIds
                     throw new Exception($"Internal error: No archive info for {string.Join(", ", pathArchives.Where(e => e.Value == null).Select(e => e.Key))}");
                 }
             }
-            Dictionary<ulong, string> tryFind = pathArchives.Keys.ToDictionary(t => ComputeHash(t, game == GameSpec.FromGame.ER), t => t);
+            bool eldenHash = game == GameSpec.FromGame.ER;
+            Dictionary<ulong, string> tryFind = pathArchives.Keys.ToDictionary(t => ComputeHash(t, eldenHash), t => t);
+            HashSet<string> found = new();
             foreach (string archive in archives)
             {
-                string bhdPath = Path.Combine(gameDir, $"{archive}.bhd");
                 string bdtPath = Path.Combine(gameDir, $"{archive}.bdt");
-                if (!File.Exists(bhdPath)) throw new Exception($"Game data file not found: {bhdPath}");
+                string bhdPath = Path.Combine(gameDir, $"{archive}.bhd");
                 if (!File.Exists(bdtPath)) throw new Exception($"Game data file not found: {bdtPath}");
+                if (!File.Exists(bhdPath)) throw new Exception($"Game data file not found: {bhdPath}");
 
                 BHD5 bhd;
                 using (MemoryStream bhdStream = DecryptRsa(bhdPath, keys[archive]))
@@ -64,22 +81,22 @@ namespace SoulsIds
                             if (tryFind.TryGetValue(file.FileNameHash, out string name))
                             {
                                 byte[] bytes = file.ReadFile(bdtStream);
-                                ret[name] = bytes;
+                                yield return (name, bytes);
+                                found.Add(name);
                                 if (debugOrigin)
                                 {
-                                    Console.WriteLine($"{archive}: {name}");
+                                    pathArchives[name] = archive;
                                 }
                             }
                         }
                     }
                 }
             }
-            List<string> missing = pathArchives.Keys.Except(ret.Keys).ToList();
+            List<string> missing = pathArchives.Keys.Except(found).ToList();
             if (missing.Count > 0)
             {
-                throw new Exception($"Game data file not found: {string.Join(", ", missing)}");
+                throw new Exception($"Game data files not found: {string.Join(", ", missing)}");
             }
-            return ret;
         }
 
         private static Dictionary<string, string> DS3Keys = new()
@@ -93,6 +110,61 @@ aaCCzZD3e7rKhDQyLCkpdsGmuqBvl02Ou7QeehbPPno78mOYs2XkP6NGqbFFGQwa
 swyyyXlQ23N15ZaFGRRR0xYjrX4LSe6OJ8Mx/Zkec0o7L28CgwCTmcD2wO8TEATE
 AUbbV+1Su9uq2+wQxgnsAp+xzhn9og9hmwIEC35bSQ==
 -----END RSA PUBLIC KEY-----",
+            ["Data2"] =
+@"-----BEGIN RSA PUBLIC KEY-----
+MIIBCwKCAQEAvCZAK9UfPdk5JaTlG7n1r0LSVzIan3h0BSLaMXQHOwO7tTGpvtdX
+m2ZLY9y8SVmOxWTQqRq14aVGLTKDyH87hPuKd47Y0E5K5erTqBbXW6AD4El1eir2
+VJz/pwHt73FVziOlAnao1A5MsAylZ9B5QJyzHJQG+LxzMzmWScyeXlQLOKudfiIG
+0qFw/xhRMLNAI+iypkzO5NKblYIySUV5Dx7649XdsZ5UIwJUhxONsKuGS+MbeTFB
+mTMehtNj5EwPxGdT4CBPAWdeyPhpoHJHCbgrtnN9akwQmpwdBBxT/sTD16Adn9B+
+TxuGDQQALed4S4KvM+fadx27pQz8pP9VLwIEL67iCQ==
+-----END RSA PUBLIC KEY-----",
+            ["Data3"] =
+@"-----BEGIN RSA PUBLIC KEY-----
+MIIBCwKCAQEAqLytWD20TSXPeAA1RGDwPW18nJwe2rBX+0HPtdzFmQc/KmQlWrP+
+94k6KClK5f7m0xUHwT8+yFGLxPdRvUPyOhBEnRA6tkObVDSxij5y0Jh4h4ilAO73
+I8VMcmscS71UKkck4444+eR4vVd+SPlzIu8VgqLefvEn/sX/pAevDp7w+gD0NgvO
+e9U6iWEXKwTOPB97X+Y2uB03gSSognmV8h2dtUFJ4Ryn5jrpWmsuUbdvGp0CWBKH
+CFruNXnfsG0hlf9LqbVmEzbFl/MhjBmbVjjtelorZsoLPK+OiPTHW5EcwwnPh1vH
+FFGM7qRMc0yvHqJnniEWDsSz8Bvg+GxpgQIEC8XNVw==
+-----END RSA PUBLIC KEY-----",
+            ["Data4"] =
+@"-----BEGIN RSA PUBLIC KEY-----
+MIIBCwKCAQEArfUaZWjYAUaZ0q+5znpX55GeyepawCZ5NnsMjIW9CA3vrOgUGRkh
+6aAU9frlafQ81LQMRgAznOnQGE7K3ChfySDpq6b47SKm4bWPqd7Ulh2DTxIgi6QP
+qm4UUJL2dkLaCnuoya/pGMOOvhT1LD/0CKo/iKwfBcYf/OAnwSnxMRC3SNRugyvF
+ylCet9DEdL5L8uBEa4sV4U288ZxZSZLg2tB10xy5SHAsm1VNP4Eqw5iJbqHEDKZW
+n2LJP5t5wpEJvV2ACiA4U5fyjQLDzRwtCKzeK7yFkKiZI95JJhU/3DnVvssjIxku
+gYZkS9D3k9m+tkNe0VVrd4mBEmqVxg+V9wIEL6Y6tw==
+-----END RSA PUBLIC KEY-----",
+            ["Data5"] =
+@"-----BEGIN RSA PUBLIC KEY-----
+MIIBCwKCAQEAvKTlU3nka4nQesRnYg1NWovCCTLhEBAnjmXwI69lFYfc4lvZsTrQ
+E0Y25PtoP0ZddA3nzflJNz1rBwAkqfBRGTeeTCAyoNp/iel3EAkid/pKOt3JEkHx
+rojRuWYSQ0EQawcBbzCfdLEjizmREepRKHIUSDWgu0HTmwSFHHeCFbpBA1h99L2X
+izH5XFTOu0UIcUmBLsK6DYsIj5QGrWaxwwXcTJN/X+/syJ/TbQK9W/TCGaGiirGM
+1u2wvZXSZ7uVM3CHwgNhAMiqLvqORygcDeNqxgq+dXDTxka43j7iPJWdHs8b25fy
+aH3kbUxKlDGaEENNNyZQcQrgz8Q76jIE0QIEFUsz9w==
+-----END RSA PUBLIC KEY-----",
+            ["DLC1"] =
+@"-----BEGIN RSA PUBLIC KEY-----
+MIIBCwKCAQEAsCGM9dFwzaIOUIin3DXy7xrmI2otKGLZJQyKi5X3znKhSTywpcFc
+KoW6hgjeh4fJW24jhzwBosG6eAzDINm+K02pHCG8qZ/D/hIbu+ui0ENDKqrVyFhn
+QtX5/QJkVQtj8M4a0FIfdtE3wkxaKtP6IXWIy4DesSdGWONVWLfi2eq62A5ts5MF
+qMoSV3XjTYuCgXqZQ6eOE+NIBQRqpZxLNFSzbJwWXpAg2kBMkpy5+ywOByjmWzUw
+jnIFl1T17R8DpTU/93ojx+/q1p+b1o5is5KcoP7QwjOqzjHJH8bTytzRbgmRcDMW
+3ahxgI070d45TMXK2YwRzI6/JbM1P29anQIEFezyYw==
+-----END RSA PUBLIC KEY-----",
+            ["DLC2"] =
+@"-----BEGIN RSA PUBLIC KEY-----
+MIIBCwKCAQEAtCXU9a/GBMVoqtpQox9p0/5sWPaIvDp8avLFnIBhN7vkgTwulZHi
+u64vZAiUAdVeFX4F+Qtk+5ivK488Mu2CzAMJcz5RvyMQJtOQXuDDqzIv21Tr5zuu
+sswoErHxxP8TZNxkHm7Ram7Oqtn7LQnMTYxsBgZZ34yJkRtAmZnGoCu5YaUR5euk
+8lF75idi97ssczUNV212tLzIMa1YOV7sxOb7+gc0VTIqs3pa+OXLPI/bMfwUc/KN
+jur5aLDDntQHGx5zuNtc78gMGwlmPqDhgTusKPO4VyKvoL0kITYvukoXJATaa1HI
+WVUjhLm+/uj8r8PNgolerDeS+8FM5Bpe9QIEHwCZLw==
+-----END RSA PUBLIC KEY-----",
+
         };
 
         private static Dictionary<string, string> EldenKeys = new()
@@ -141,6 +213,55 @@ Dp1Y+7hgrGwuTkjycqqsQ/qILm4NvJHvGRd7xLOJ9rs2zwYhceRVrq9XU2AXbdY4
 pdCQ3+HuoaFiJ0dW0ly5qdEXjbSv2QEYe36nWCtsd6hEY9LjbBX8D1fK3D2c6C0g
 NdHJGH2iEONUN6DMK9t0v2JBnwCOZQ7W+Gt7SpNNrkx8xKEM8gH9na10g9ne11Mi
 O1FnLm8i4zOxVdPHQBKICkKcGS1o3C2dfwIEXw/f3w==
+-----END RSA PUBLIC KEY-----",
+        };
+
+        private static Dictionary<string, string> SekiroKeys = new()
+        {
+            ["Data1"] =
+@"-----BEGIN RSA PUBLIC KEY-----
+MIIBCwKCAQEA92l+AWx1aV7mzt+6r00bm/qnc4b6NH3VVr/v4UxMcfzushL8jsn9
+ZSP1ss95ot/quk8dOJsp0+/bvxH+C9DEezzNLSqqAGd2jq2PYosj/6FhYAKjjMlK
+jNxcVPsKQug0Zby+KYsENirmEXcmA1fzltrISf6d6LKB1UFHHN9NRkLCm3idE4Pu
+9852kPHbiL14EqfDCDgwm7kLeQdt3kUbcmdhu/6dvP42HGxBmAYLNFD3iAe7qLML
+MFzmKKHQD2fRQK/431Z3xPK6Jp245AdR0AwUYVvnXq+/97wMX0C6UKvAZ+b/1ytD
+Nu8vZt++lhJ01SjTc2A4hVPz7g1EEO5/TQIEKkj5Jw==
+-----END RSA PUBLIC KEY-----",
+            ["Data2"] =
+@"-----BEGIN RSA PUBLIC KEY-----
+MIIBDAKCAQEAqhjoThWX8VwsTKTI1kjp0JBloCXhV8i99P1KPTCTDBnmhVQPdu+7
+UQ5g4//eh0oqKaOUjet+0SP94QscjIIrhV91OzfIouIWgJJK/ROOP/A3sb5AlzPa
+6YPcN8ODxR+esyrWhc6rHCt4qGvXVXrgh6zpZM5h5VCTSaup4qqIWm44EF3+FeYS
+7faFg14rH0QEosieIIZFZmpI6SCJanlrVd+Zh13s4XcZfk0JdC2AEjxCQ2lKi3Un
+WAMOcJc+8uHoMuNNo1PMpYQ6Z8Nzg5Cii7EnwbCDmuJw58tFBmbOVHZpkY93VIeF
+maJXSE7ztTp0qTa05YZUsiU3g9HplkeTUwIFAP/xKZE=
+-----END RSA PUBLIC KEY-----",
+            ["Data3"] =
+@"-----BEGIN RSA PUBLIC KEY-----
+MIIBDAKCAQEAx5jlgIvoHQLwSFsAwKFZbNo3fgZ89C7tj4hwiZsQVg8QnNZohXl5
+S5Ep9pS2biOFsSkuZMXKmfYErh2CsdFbr7QR7kvPPianXNrkCI4xlfQwJvMmkLm9
+6/JmRIUzTWp0kKJUJZJH/UIrXNn7fmk8Vmx1bQIi8bumGSl3gxeMhutv/lC9khsY
+Tn0ABTJAbIbwNZ5GPXxzQZuQPXXDY52Gm+Fx7Yy1LiK/B6isIDJUN0xdgxdaXxGN
+f5pPocMJjng0Ob3cjhGvdkysll/jYFnRx0La3CGmtLcXMtHheEQxzGueGDa/lkkl
+AvvEXtcpKfyFQWcUheQZ8LngAh/UTJHtQwIFAOpVoU8=
+-----END RSA PUBLIC KEY-----",
+            ["Data4"] =
+@"-----BEGIN RSA PUBLIC KEY-----
+MIIBCwKCAQEAq8RyArk+eqMAcxLAHUDRYV7yScNKZpKSxGmgJZQ7y6Y8f5wdrNCt
+byXfmsdQECStIGlkwWjtfm8t/bRZuxxPciAYaFsWo0Ze2BB6uY6ZteNpLJn82qbL
+TXATf+af3kSrvICfvJwRzbfA/PRJRkHj2gJ6Tc7g6HK7S/4TiCZirq+c/zLY3gb8
+A8uIFNI4j0qxTzfoAlS7K6spZjfnhZ6l7pYFh+glz15wAbppC9Oy/u5vUacozf4v
+nacbUHD47ds9EZPZDHk3LfJbioHwtUzJfyBqZmIpI33yiwImPpb96zwvQU86TaXK
+sJrTmSs/48BeDsQwXuaqOg+6noETBx3pgQIEGM2Ohw==
+-----END RSA PUBLIC KEY-----",
+            ["Data5"] =
+@"-----BEGIN RSA PUBLIC KEY-----
+MIIBDAKCAQEAu75/UbXwHdvu/p49TwnY7Ou6DAuZYFAtLUkw/R4nvm0HWVlRsZiB
+LG3MOG6sPmK2Zc3JLBU2QK4uKazZ9VrmotM4OpYr03q2tiFnv3NfCvB1UeIJIKe3
+kVhHNZIbvrwEP9a5UCnrSHD+u+Fj5MQBr4yrEitwrNVvIC4J0Ez1Ppn3+D8ff8Xg
+QRP9qCVLI3X/wdQDea+B5o8PWaYEL9MKnnL1Tq4h+4PRYHcQR8/GXBTrc3x9q3cP
+QRDWHbRYhIfWSP9urtagjcsmcuG+p34fp+KyWOwkil3FJqwH1KgSTbk9Tb0oBPzq
+TCJKeE/wgu6hY++lBi5T3ArHZZcsbXzV6wIFAPlRTMc=
 -----END RSA PUBLIC KEY-----",
         };
 
@@ -206,7 +327,7 @@ O1FnLm8i4zOxVdPHQBKICkKcGS1o3C2dfwIEXw/f3w==
             return outputStream;
         }
 
-        public static AsymmetricKeyParameter GetKeyOrDefault(string key)
+        private static AsymmetricKeyParameter GetKeyOrDefault(string key)
         {
             try
             {

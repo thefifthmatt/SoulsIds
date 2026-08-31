@@ -7,15 +7,16 @@ namespace SoulsIds
 {
     public class ESDEdits
     {
-        // TODO: This is incredibly wrong
         public enum ComparisonType
         {
+            // Previously this was copied and pasted from DarkScript3 and was very wrong. For migration purposes:
+            // Equal = 0, NotEqual = 1, Greater = 2, Less = 3, GreaterOrEqual = 4, LessOrEqual = 5
             Equal = 0,
-            NotEqual = 1,
+            Less = 1,
             Greater = 2,
-            Less = 3,
+            LessOrEqual = 3,
             GreaterOrEqual = 4,
-            LessOrEqual = 5,
+            NotEqual = 5,
         }
         public enum EldenStat
         {
