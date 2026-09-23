@@ -1785,7 +1785,7 @@ namespace SoulsIds
             {
                 throw new Exception($"Internal error: Segment {edit.Segment} not found in [{string.Join(", ", e.SegmentStates.Keys)}]");
             }
-            if (int.TryParse(toFind, out var _))
+            if (int.TryParse(toFind, out _) || ParseArgSpec(toFind, out _))
             {
                 if (e.ArgEdits == null) e.ArgEdits = new Dictionary<string, List<InstrEdit>>();
                 AddMulti(e.ArgEdits, toFind, edit);
