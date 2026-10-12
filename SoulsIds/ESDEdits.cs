@@ -276,6 +276,43 @@ namespace SoulsIds
             return FindMachinesWithCommand(esd, hasTalkData);
         }
 
+        public static void AddTalkListDataRestriction(ESD esd, Func<int, AST.Expr> exprForMsgId)
+        {
+            ForEachCommand(esd, c =>
+            {
+                if (c.CommandID != 19) return;
+                AST.Expr arg;
+                if (c.CommandBank == 1 && c.Arguments.Count > 1)
+                {
+                    arg = AST.DisassembleExpression(c.Arguments[1]);
+                }
+                else if (c.CommandBank == 5 && c.Arguments.Count > 2)
+                {
+                    arg = AST.DisassembleExpression(c.Arguments[2]);
+                }
+                else return;
+                if (arg.TryAsInt(out int msgId))
+                {
+                    AST.Expr showExpr = exprForMsgId(msgId);
+                    if (showExpr == null)
+                    {
+                        return;
+                    }
+                    if (c.CommandBank == 1)
+                    {
+                        c.CommandBank = 5;
+                        c.Arguments.Insert(0, AST.AssembleExpression(showExpr));
+                    }
+                    else
+                    {
+                        AST.Expr existCond = AST.DisassembleExpression(c.Arguments[0]);
+                        showExpr = AST.Binop(existCond, "&&", showExpr);
+                        c.Arguments[0] = AST.AssembleExpression(showExpr);
+                    }
+                }
+            });
+        }
+
         public class CustomTalkData
         {
             public int Msg { get; set; }
