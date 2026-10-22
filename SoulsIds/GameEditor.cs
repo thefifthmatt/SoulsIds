@@ -288,14 +288,14 @@ namespace SoulsIds
                 {
                     return SFUtil.DecryptERRegulation(path);
                 }
-                else if (Spec.Game == FromGame.AC6 && detectPath.EndsWith(".bin"))
-                {
-                    return SFUtil.DecryptAC6Regulation(path);
-                }
-                else if (Spec.Game == FromGame.NR && detectPath.EndsWith(".bin"))
-                {
-                    return SFUtil.DecryptNRRegulation(path);
-                }
+                //else if (Spec.Game == FromGame.AC6 && detectPath.EndsWith(".bin"))
+                //{
+                //    return SFUtil.DecryptAC6Regulation(path);
+                //}
+                //else if (Spec.Game == FromGame.NR && detectPath.EndsWith(".bin"))
+                //{
+                //    return SFUtil.DecryptNRRegulation(path);
+                //}
                 byte[] data = File.ReadAllBytes(path);
                 if (DCX.Is(data))
                 {
@@ -337,11 +337,11 @@ namespace SoulsIds
                     bnd4.Compression = dcx;
                     SFUtil.EncryptERRegulation(outPath, bnd4);
                 }
-                else if (Spec.Game == FromGame.NR && outPath.EndsWith("regulation.bin"))
-                {
-                    bnd4.Compression = dcx;
-                    SFUtil.EncryptNRRegulation(outPath, bnd4);
-                }
+                //else if (Spec.Game == FromGame.NR && outPath.EndsWith("regulation.bin"))
+                //{
+                //    bnd4.Compression = dcx;
+                //    SFUtil.EncryptNRRegulation(outPath, bnd4);
+                //}
                 else
                 {
                     bnd4.Write(outPath, dcx);

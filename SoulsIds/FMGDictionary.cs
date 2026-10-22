@@ -12,9 +12,10 @@ namespace SoulsIds
         public Dictionary<string, byte[]> Inner { get; set; }
 
         // TODO: Return non-FMG with same API
-        public FMGX this[string key]
+        public FMG this[string key]
         {
-            get => GetX(key);
+            // This returns FMGX in thefifthmatt/master, but all calls expect FMG.
+            get => Get(key);
         }
 
         public FMG Get(string key)
