@@ -199,6 +199,17 @@ namespace SoulsIds
             }
         }
 
+        public static bool CheckExpression(AST.Expr expr, Func<AST.Expr, bool> predicate)
+        {
+            // Simple visitor wrapper
+            bool check = false;
+            expr.Visit(AST.AstVisitor.PreAct(e =>
+            {
+                check |= predicate(e);
+            }));
+            return check;
+        }
+
         // Excludes pass commands
         public static void ForEachCommand(ESD esd, Action<ESD.CommandCall> predicate)
         {
